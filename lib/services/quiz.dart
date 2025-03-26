@@ -41,26 +41,27 @@ class QuizService {
     }
   }
 
-Future<List<Map<String, dynamic>>?> fetchUserQuizzes(String userId) async {
-  try {
-    final query = _db
-        .collection('quizzes')
-        .where('createdBy', isEqualTo: userId); // Use userId directly
+  Future<List<Map<String, dynamic>>> fetchUserQuizzes(String userId) async {
+    try {
+      final snapshot = await _db
+          .collection('quizzes')
+          .where('createdBy', isEqualTo: userId)
+          .get();
 
-    final querySnapshot = await query.get();
-
-    // Return the list of quizzes with their IDs and data
-    return querySnapshot.docs.map((doc) {
-      return {
-        'id': doc.id,
-        ...doc.data() as Map<String, dynamic>, // Ensure data is cast to the correct type
-      };
-    }).toList();
-  } catch (e) {
-    // Return null or handle the error accordingly
-    return null;
+      return snapshot.docs.map((doc) {
+        return {
+          'id': doc.id,
+          'name': doc['quizName'] as String,
+          // Include other fields you need
+        };
+      }).toList();
+    } catch (e) {
+      print('Error fetching user quizzes: $e');
+      throw e;
+    }
   }
-}
+
+
 
 
 
