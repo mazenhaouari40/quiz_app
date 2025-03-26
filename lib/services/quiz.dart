@@ -61,6 +61,17 @@ class QuizService {
     }
   }
 
+  Future<void> deleteQuiz(String quizId) async {
+    try {
+      await _db.collection('quizzes').doc(quizId).delete();
+      print('Quiz deleted successfully');
+    } catch (e) {
+      print('Error deleting quiz: $e');
+      throw e;
+    }
+  }
+
+
 
 
 

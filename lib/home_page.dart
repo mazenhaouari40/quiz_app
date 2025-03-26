@@ -5,6 +5,7 @@ import 'services/auth.dart';
 import 'CreateQuizPage.dart';
 import 'UpdateQuiz.dart'; // Add this import
 import 'widgets/custom_appbar.dart';
+import 'services/quiz.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -43,6 +44,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -103,57 +106,85 @@ class _HomePageState extends State<HomePage> {
                 itemCount: quizzes.length,
                 itemBuilder: (context, index) {
                   final quiz = quizzes[index];
-                  return Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            quiz['name']!,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              // Play Button (Red)
-                              ElevatedButton(
-                                onPressed: () {
-                                  // Add play functionality
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  padding: EdgeInsets.symmetric(horizontal: 12),
-                                ),
-                                child: Text(
-                                  "Play",
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                              // Update Button
-                              ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => UpdateQuiz(
-                                        quizId: quiz['id']!,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: Text("Update"),
-                              ),
-                            ],
-                          ),
-                        ],
+               return Card(
+  child: Stack(
+    children: [
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              quiz['name']!,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Play Button (Green)
+                ElevatedButton(
+                  onPressed: () {
+                    // Add play functionality
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 54, 244, 76),
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  child: Text(
+                    "Play",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+                // Update Button
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => UpdateQuiz(
+                          quizId: quiz['id']!,
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  },
+                  child: Text("Update"),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      // Close Button in top-right corner
+      Positioned(
+        right: 8,
+        top: 8,
+        child: GestureDetector(
+    onTap: () async {
+      // Call deleteQuiz method
+      await QuizService().deleteQuiz(quiz['id']!);
+      
+      // Update the local quizzes list to remove the deleted quiz
+      setState(() {
+        quizzes.removeWhere((q) => q['id'] == quiz['id']);
+      });
+    },
+          child: Icon(
+            Icons.close,
+            color: Colors.red,
+            size: 24,
+          ),
+        ),
+      ),
+    ],
+  ),
+);
+
+
+               
                 },
               ),
             ),
