@@ -7,53 +7,61 @@ class QuizService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   // Save a new quiz to Firestore
-  Future<void> saveNewQuiz(Map<String, dynamic> quiz) async {
+  Future<bool> saveNewQuiz(Map<String, dynamic> quiz) async {
     try {
       // Create a new document reference with auto-generated ID
       final newQuizRef = _db.collection('quizzes').doc();
       final newQuizId = newQuizRef.id;
 
-      // Create sanitized quiz data
-      final sanitizedQuiz = {
+      // Create  quiz data
+      final Quizdata = {
         'id': newQuizId,
         'quizName': quiz['quizName'],
-        'totalDuration': quiz['totalDuration'],
-        'totalMarks': quiz['totalMarks'],
-        'createdBy': quiz['user']['uid'],
-        'quizzes': quiz['quizzes'],
+        'totalMarks': 0,
+        'createdBy': quiz['user'],
+        'questions': quiz['questions'],
       };
 
       // Set the document data
-      await newQuizRef.set(sanitizedQuiz);
-
+      await newQuizRef.set(Quizdata);
+      
       Fluttertoast.showToast(
         msg: "Quiz saved successfully",
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
       );
+      return true;
     } catch (e) {
       Fluttertoast.showToast(
         msg: "Failed to save quiz",
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
       );
+      return false;
     }
   }
 
-  // Fetch quizzes created by a specific user
-  Future<List<Map<String, dynamic>>?> fetchUserQuizzes(Map<String, dynamic> user) async {
-    try {
-      final query = _db
-          .collection('quizzes')
-          .where('createdBy', isEqualTo: user['uid']);
+Future<List<Map<String, dynamic>>?> fetchUserQuizzes(String userId) async {
+  try {
+    final query = _db
+        .collection('quizzes')
+        .where('createdBy', isEqualTo: userId); // Use userId directly
 
-      final querySnapshot = await query.get();
+    final querySnapshot = await query.get();
 
-      return querySnapshot.docs
-          .map((doc) => {'id': doc.id, ...doc.data()})
-          .toList();
-    } catch (e) {
-      return null;
-    }
+    // Return the list of quizzes with their IDs and data
+    return querySnapshot.docs.map((doc) {
+      return {
+        'id': doc.id,
+        ...doc.data() as Map<String, dynamic>, // Ensure data is cast to the correct type
+      };
+    }).toList();
+  } catch (e) {
+    // Return null or handle the error accordingly
+    return null;
   }
+}
+
+
+
 }

@@ -41,11 +41,11 @@ class HomePage extends StatelessWidget {
 
 
 }*/
-
-import 'services/auth.dart';
 import 'package:flutter/material.dart';
-import 'CreateQuizPage.dart'; // Add this at the top of your file
-import 'widgets/custom_appbar.dart'; // Import the new appbar
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'services/auth.dart';
+import 'CreateQuizPage.dart';
+import 'widgets/custom_appbar.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -53,65 +53,72 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String quizName = "My Quiz";
   final TextEditingController _searchController = TextEditingController();
-  List<String> quizzes = ["Math Quiz"];
+  List<Map<String, String>> quizzes = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchQuizzes();
+  }
+
+  Future<void> _fetchQuizzes() async {
+    final snapshot = await FirebaseFirestore.instance.collection('quizzes').get();
+    setState(() {
+      quizzes = snapshot.docs.map((doc) => {
+        'id': doc.id,
+        'name': doc['quizName'] as String,
+      }).toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
         title: "HomePage",
-        // Optional: You can pass a custom sign out function
-        // onSignOut: () => yourCustomSignOutLogic(),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-
-Row(
-  children: [
-    // Small New Quiz Button on the Left
-    SizedBox(
-      height: 40,
-      child: ElevatedButton(
-         onPressed: () {
-          Navigator.push(
+            Row(
+              children: [
+                SizedBox(
+                  height: 40,
+                  child: ElevatedButton(
+                    onPressed: () {
+                            Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => CreateQuizPage()),
+            MaterialPageRoute(builder: (context) => QuizPage()),
           );
-        },
-        style: ElevatedButton.styleFrom(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-        ),
-        child: Text(
-          "New Quiz",
-          style: TextStyle(fontSize: 14),
-        ),
-      ),
-    ),
-    
-    // Flexible space between button and search
-    Expanded(child: SizedBox.shrink()),
-    
-    // Small Search Field on the Right
-    SizedBox(
-      width: 200, // Fixed width for search field
-      height: 40,
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: "Search",
-          border: OutlineInputBorder(),
-          isDense: true,
-          contentPadding: EdgeInsets.all(10),
-          prefixIcon: Icon(Icons.search, size: 20),
-        ),
-      ),
-    ),
-  ],
-),
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                    child: Text(
+                      "New Quiz",
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ),
+                Expanded(child: SizedBox.shrink()),
+                SizedBox(
+                  width: 200,
+                  height: 40,
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: "Search",
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                      contentPadding: EdgeInsets.all(10),
+                      prefixIcon: Icon(Icons.search, size: 20),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             SizedBox(height: 20),
             Expanded(
               child: GridView.builder(
@@ -126,8 +133,11 @@ Row(
                   return Card(
                     child: Center(
                       child: Text(
-                        quizzes[index],
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        quizzes[index]['name']!,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   );
@@ -139,4 +149,12 @@ Row(
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 }
+
+       
