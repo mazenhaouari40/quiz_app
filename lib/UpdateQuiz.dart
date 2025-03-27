@@ -13,65 +13,64 @@ class UpdateQuiz extends StatefulWidget {
 
 class _UpdateQuizState extends State<UpdateQuiz> {
   late TextEditingController _controller;
-  late List<String> questions;
-  late List<List<String>> options;
-  late List<Set<int>> correctAnswers;
-  late List<int> questionMarks;
+  List<String> questions = [];
+  List<List<String>> options = [];
+  List<Set<int>> correctAnswers = [];
+  List<int> questionMarks = [];
   int selectedQuestion = 0;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController();
-    questions = [];
-    options = [];
-    correctAnswers = [];
-    questionMarks = [];
+    _controller = TextEditingController(text: "Loading...");
     _loadQuizData();
-
   }
 
   Future<void> _loadQuizData() async {
-  try {
-    final quizData = await QuizService().fetchQuizById(widget.quizId);
-    
-    setState(() {
-      _controller = TextEditingController(text: quizData['quizName']);
+    try {
+      final quizData = await QuizService().fetchQuizById(widget.quizId);
       
-      // Initialize questions and options from the loaded data
-      questions = List<String>.from(
-        quizData['questions'].map((q) => q['question'] as String)
-      );
+      setState(() {
+        _controller = TextEditingController(text: quizData['quizName'] ?? "Untitled Quiz");
+        
+        // Initialize questions and options from the loaded data
+        questions = List<String>.from(
+          quizData['questions']?.map((q) => q['question'] as String) ?? ["New Question"]
+        );
+        
+        options = List<List<String>>.from(
+          quizData['questions']?.map((q) => List<String>.from(q['options'] ?? ["Option 1", "Option 2"])) ?? [["Option 1", "Option 2"]]
+        );
+        
+        correctAnswers = List<Set<int>>.from(
+          quizData['questions']?.map((q) => 
+            Set<int>.from((q['correctAnswers'] as List<dynamic>?)?.map((e) => e as int) ?? [0])
+          ) ?? [{}]
+        );
+        
+        questionMarks = List<int>.from(
+          quizData['questions']?.map((q) => q['marks'] as int? ?? 1) ?? [1]
+        );
+        
+        isLoading = false;
+      });
       
-      options = List<List<String>>.from(
-        quizData['questions'].map((q) => List<String>.from(q['options']))
+    } catch (e) {
+      // Fallback to default values if loading fails
+      setState(() {
+        _controller = TextEditingController(text: "My first quiz");
+        questions = ["What does HIPAA protect?"];
+        options = [["Doctor credentials", "Patient data", "Hospital policies"]];
+        correctAnswers = [{1}];
+        questionMarks = [1];
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading quiz: ${e.toString()}'))
       );
-      
-      correctAnswers = List<Set<int>>.from(
-        quizData['questions'].map((q) => 
-          Set<int>.from((q['correctAnswers'] as List).map((e) => e as int))
-        )
-      );
-      
-      questionMarks = List<int>.from(
-        quizData['questions'].map((q) => q['marks'] as int)
-      );
-    });
-    
-  } catch (e) {
-    // Fallback to default values if loading fails
-    setState(() {
-      _controller = TextEditingController(text: "My first quiz");
-      questions = ["What does HIPAA protect?"];
-      options = [["Doctor credentials", "Patient data", "Hospital policies"]];
-      correctAnswers = [{1}];
-      questionMarks = [1];
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error loading quiz: ${e.toString()}'))
-    );
+    }
   }
-}
 
   void addNewQuestion() {
     setState(() {
@@ -79,6 +78,7 @@ class _UpdateQuizState extends State<UpdateQuiz> {
       options.add(["Option 1", "Option 2", "Option 3"]);
       correctAnswers.add({});
       questionMarks.add(1);
+      selectedQuestion = questions.length - 1;
     });
   }
 
@@ -102,9 +102,9 @@ class _UpdateQuizState extends State<UpdateQuiz> {
         });
       }
 
-      QuizService().updateQuiz( quizData,widget.quizId,);
+      QuizService().updateQuiz(quizData, widget.quizId);
       
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => HomePage()),
       );
@@ -125,7 +125,13 @@ class _UpdateQuizState extends State<UpdateQuiz> {
 
   void removeOption(int index) {
     setState(() {
-      if (options[selectedQuestion].length > 3) {
+      if (options[selectedQuestion].length > 2) { // Minimum 2 options
+        // Remove any correct answers pointing to this option
+        correctAnswers[selectedQuestion].remove(index);
+        // Adjust other correct answers if they were after this index
+        correctAnswers[selectedQuestion] = correctAnswers[selectedQuestion].map((ans) {
+          return ans > index ? ans - 1 : ans;
+        }).toSet();
         options[selectedQuestion].removeAt(index);
       }
     });
@@ -139,6 +145,13 @@ class _UpdateQuizState extends State<UpdateQuiz> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: Text('Update Quiz')),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Update Quiz'),
@@ -245,10 +258,12 @@ class _UpdateQuizState extends State<UpdateQuiz> {
                               ),
                               child: ListTile(
                                 title: Text(
-                                  questions[index],
+                                  questions[index].isNotEmpty ? questions[index] : "Untitled Question",
                                   style: TextStyle(
                                     color: selectedQuestion == index ? Colors.white : Colors.black,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 onTap: () {
                                   setState(() {
@@ -285,9 +300,8 @@ class _UpdateQuizState extends State<UpdateQuiz> {
                                     ),
                                     padding: const EdgeInsets.symmetric(horizontal: 12),
                                     child: TextField(
-                             controller: TextEditingController(text: questions[selectedQuestion]
-            )..selection = TextSelection.collapsed(offset: questions[selectedQuestion].length)
-            ,
+                                      controller: TextEditingController(text: questions[selectedQuestion])
+                                        ..selection = TextSelection.collapsed(offset: questions[selectedQuestion].length),
                                       onChanged: (value) {
                                         setState(() {
                                           questions[selectedQuestion] = value;
@@ -358,9 +372,9 @@ class _UpdateQuizState extends State<UpdateQuiz> {
                                     ),
                                     Expanded(
                                       child: TextField(
-         controller: TextEditingController(text: options[selectedQuestion][index]
-              )..selection = TextSelection.collapsed(offset: options[selectedQuestion][index].length)
-              ,                                        onChanged: (value) {
+                                        controller: TextEditingController(text: options[selectedQuestion][index])
+                                          ..selection = TextSelection.collapsed(offset: options[selectedQuestion][index].length),
+                                        onChanged: (value) {
                                           setState(() {
                                             options[selectedQuestion][index] = value;
                                           });
