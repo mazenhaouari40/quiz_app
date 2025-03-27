@@ -232,7 +232,11 @@ Container(
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: TextField(
-            controller: TextEditingController(text: questions[selectedQuestion]),
+              textDirection: TextDirection.ltr, // Explicitly set LTR
+
+            controller: TextEditingController(text: questions[selectedQuestion]
+            )..selection = TextSelection.collapsed(offset: questions[selectedQuestion].length)
+            ,
             onChanged: (value) {
               setState(() {
                 questions[selectedQuestion] = value;
@@ -305,7 +309,9 @@ Container(
           ),
           Expanded(
             child: TextField(
-              controller: TextEditingController(text: options[selectedQuestion][index]),
+              controller: TextEditingController(text: options[selectedQuestion][index]
+              )..selection = TextSelection.collapsed(offset: options[selectedQuestion][index].length)
+              ,
               onChanged: (value) {
                 setState(() {
                   options[selectedQuestion][index] = value;

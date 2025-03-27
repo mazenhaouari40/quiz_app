@@ -41,6 +41,62 @@ class QuizService {
     }
   }
 
+  // Update an existing quiz in Firestore
+Future<bool> updateQuiz(Map<String, dynamic> quiz, String quizId) async {
+  try {
+    // Get a reference to the quiz document
+    final quizRef = _db.collection('quizzes').doc(quizId);
+
+    // Create updated quiz data
+    final updatedQuizData = {
+      'quizName': quiz['quizName'],
+      'createdBy': quiz['user'],
+      'questions': quiz['questions'],
+
+    };
+
+    // Update the document
+    await quizRef.update(updatedQuizData);
+    
+    Fluttertoast.showToast(
+      msg: "Quiz updated successfully",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+    );
+    return true;
+  } catch (e) {
+    Fluttertoast.showToast(
+      msg: "Failed to update quiz: $e",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+    );
+    return false;
+  }
+}
+
+  Future<Map<String, dynamic>> fetchQuizById(String quizId) async {
+  try {
+    final docSnapshot = await _db.collection('quizzes').doc(quizId).get();
+    
+    if (docSnapshot.exists) {
+      final data = docSnapshot.data() as Map<String, dynamic>;
+      return {
+        'id': docSnapshot.id,
+        'quizName': data['quizName'],
+        'totalMarks': data['totalMarks'],
+        'createdBy': data['createdBy'],
+        'questions': List<Map<String, dynamic>>.from(data['questions']),
+        // Include any other fields you need
+      };
+    } else {
+      throw Exception('Quiz not found');
+    }
+  } catch (e) {
+    print('Error fetching quiz: $e');
+    throw e; // Re-throw to let the caller handle it
+  }
+}
+
   Future<List<Map<String, dynamic>>> fetchUserQuizzes(String userId) async {
     try {
       final snapshot = await _db
