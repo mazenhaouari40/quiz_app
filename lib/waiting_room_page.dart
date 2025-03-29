@@ -125,11 +125,6 @@ Future<void> _removeUser(String participantId) async {
           _gameStatus = _parseGameStatus(data['status']);
          _currentQuizNumber = data['curQuestionNumber'] ?? -1;
           
-          /*if (_quiz == null && data['quizId'] != null) {
-            _fetchQuizData(data['quizId']);
-          }*/
-    /*List<Map<String, dynamic>> participantData = [
-      {'display_name': 'John Doe', 'score': 0, 'id': 'user1'},]*/
         });
       }
     });
@@ -167,16 +162,6 @@ FirebaseFirestore.instance
 
   @override
   Widget build(BuildContext context) {
-    // Sample participant data (this could come from a backend in a real-world app)
-  /*  List<Map<String, dynamic>> participantData = [
-      {'display_name': 'John Doe', 'score': 0, 'id': 'user1'},
-      {'display_name': 'Jane Smith', 'score': 0, 'id': 'user2'},
-      {'display_name': 'Bob Johnson', 'score': 0, 'id': 'user3'},
-      {'display_name': 'Alice Williams', 'score': 0, 'id': 'user4'},
-      {'display_name': 'Charlie Brown', 'score': 0, 'id': 'user5'},
-      {'display_name': 'Diana Prince', 'score': 0, 'id': 'user6'},
-      {'display_name': 'Bruce Wayne', 'score': 0, 'id': 'user7'},
-    ];*/
 
     // Create the participants list
     List<Map<String, dynamic>> participants = createParticipants(
