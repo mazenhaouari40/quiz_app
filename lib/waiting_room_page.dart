@@ -1,27 +1,38 @@
-import 'package:flutter/material.dart';
-import 'services/quiz.dart';
+import 'dart:async';
 
-/* Replace this function with the backend for participants in the service folder */
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'services/quiz.dart';
+enum GameStatus {
+  waiting,
+  countdown,
+  started,
+  leaderboard,
+  finished,
+}
 List<Map<String, dynamic>> createParticipants(
   List<Map<String, dynamic>> participantData,
 ) {
   return participantData.map((data) {
     return {
-      'display_name': data['display_name'],
-      'score': data['score'] ?? 0, // Default to 0 if not provided
-      'id': data['id'],
+      'display_name': data['displayName'],
+      'score': data['score'] ?? 0, 
+      'id': data['userid'],
     };
   }).toList();
 }
 
 class WaitingPage extends StatefulWidget {
-  final String quizId;
+  final String activequizId;
   final String userId;
   final String invitation_code;
 
   WaitingPage({
     Key? key,
-    required this.quizId,
+    required this.activequizId,
     required this.userId,
     required this.invitation_code,
   }) : super(key: key);
@@ -31,10 +42,27 @@ class WaitingPage extends StatefulWidget {
 }
 
 class _WaitingPageState extends State<WaitingPage>
-    with SingleTickerProviderStateMixin {
+  with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   final QuizService _quizService = QuizService();
+//variable to set status
+  int _currentQuizNumber = -1;
+  GameStatus _gameStatus = GameStatus.waiting;
+  bool _isHost = false;
+  StreamSubscription? _quizSubscription;
+  List<Map<String, dynamic>> _participantData = []; 
+   
+    GameStatus _parseGameStatus(String status) {
+    switch (status) {
+      case 'waiting': return GameStatus.waiting;
+      case 'countdown': return GameStatus.countdown;
+      case 'started': return GameStatus.started;
+      case 'leaderboard': return GameStatus.leaderboard;
+      case 'finished': return GameStatus.finished;
+      default: return GameStatus.waiting;
+    }
+  }
 
   @override
   void initState() {
@@ -43,20 +71,104 @@ class _WaitingPageState extends State<WaitingPage>
       vsync: this,
       duration: Duration(seconds: 2),
     )..repeat(reverse: true);
-
     _fadeAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(_controller);
+  _setupFirebaseListener();
+  }
+
+
+Future<void> _removeUser(String participantId) async {
+  try {
+    if (participantId.isEmpty) {
+      throw Exception('Participant ID cannot be empty');
+    }
+
+    await FirebaseFirestore.instance
+        .collection('actived_Quizzes')  // Correct collection name
+        .doc(widget.activequizId)       // Using widget's quiz ID
+        .collection('participants')
+        .doc(participantId)             // Directly use the passed document ID
+        .delete();
+
+    debugPrint('Successfully removed participant: $participantId');
+  } catch (e) {
+    debugPrint('Error removing participant: $e');
+    rethrow; // Re-throw to let calling code handle the error
+  }
+}
+
+ Future<void> _fetchParticipants() async {
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('actived_Quizzes')
+          .doc(widget.activequizId)
+          .collection('participants')
+          .get();
+
+        _participantData = query.docs.map((doc) => doc.data()).toList();
+
+      
+      // Jouer les sons si nécessaire
+    } catch (e) {
+      print('Error fetching participants: $e');
+    }
+  }
+  void _setupFirebaseListener() {
+    final activeQuizRef = FirebaseFirestore.instance
+        .collection('actived_Quizzes')
+        .doc(widget.activequizId);
+
+    _quizSubscription = activeQuizRef.snapshots().listen((docSnapshot) {
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data()!;
+        setState(() {
+          _isHost = data['createdBy'] == widget.userId;
+          _gameStatus = _parseGameStatus(data['status']);
+         _currentQuizNumber = data['curQuestionNumber'] ?? -1;
+          
+          /*if (_quiz == null && data['quizId'] != null) {
+            _fetchQuizData(data['quizId']);
+          }*/
+    /*List<Map<String, dynamic>> participantData = [
+      {'display_name': 'John Doe', 'score': 0, 'id': 'user1'},]*/
+        });
+      }
+    });
+
+//participant listenner
+FirebaseFirestore.instance
+      .collection('actived_Quizzes')
+      .doc(widget.activequizId)
+      .collection('participants')
+      .snapshots()
+      .listen((querySnapshot) {
+        if (querySnapshot.docs.isNotEmpty) {
+          _participantData = querySnapshot.docs.map((doc) => doc.data()).toList();
+          
+          // If new participant detected, navigate to all users screen
+          if (mounted) {
+            setState(() {
+              _fetchParticipants();
+            }); // Update UI with new participants
+          }
+        }
+      });
+
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+    _removeUser(widget.userId);
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {
     // Sample participant data (this could come from a backend in a real-world app)
-    List<Map<String, dynamic>> participantData = [
+  /*  List<Map<String, dynamic>> participantData = [
       {'display_name': 'John Doe', 'score': 0, 'id': 'user1'},
       {'display_name': 'Jane Smith', 'score': 0, 'id': 'user2'},
       {'display_name': 'Bob Johnson', 'score': 0, 'id': 'user3'},
@@ -64,11 +176,11 @@ class _WaitingPageState extends State<WaitingPage>
       {'display_name': 'Charlie Brown', 'score': 0, 'id': 'user5'},
       {'display_name': 'Diana Prince', 'score': 0, 'id': 'user6'},
       {'display_name': 'Bruce Wayne', 'score': 0, 'id': 'user7'},
-    ];
+    ];*/
 
     // Create the participants list
     List<Map<String, dynamic>> participants = createParticipants(
-      participantData,
+      _participantData,
     );
 
     return Scaffold(
@@ -122,7 +234,9 @@ class _WaitingPageState extends State<WaitingPage>
                 ),
                 SizedBox(height: 20),
                 // "Start Quiz" Button
-                ElevatedButton(
+                Visibility(
+          visible: _isHost,
+               child: ElevatedButton(
                   onPressed: () async {
                     // Convert participants list to map
                     // Uncommment and Modify this
@@ -156,6 +270,7 @@ class _WaitingPageState extends State<WaitingPage>
                     "Start Quiz",
                     style: TextStyle(color: Colors.white),
                   ),
+                ),
                 ),
                 SizedBox(height: 30),
                 // Participants Grid

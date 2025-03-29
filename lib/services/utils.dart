@@ -13,7 +13,7 @@ class UniqueCodeGenerator {
     do {
       int firstPart = _random.nextInt(900) + 100;
       int secondPart = _random.nextInt(900) + 100;
-      newCode = '$firstPart $secondPart';
+      newCode = '$firstPart$secondPart';
     } while (_generatedCodes.contains(newCode));
 
     if (_generatedCodes.length >= maxSize) {

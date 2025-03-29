@@ -7,6 +7,12 @@ import 'CreateQuizPage.dart';
 import 'UpdateQuiz.dart'; // Add this import
 import 'widgets/custom_appbar.dart';
 import 'services/quiz.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'services/quiz.dart';
+
+enum quizState { 
+  waiting, count_down, started, leader_board, finished 
+  }
 
 class HomePage extends StatefulWidget {
   @override
@@ -15,8 +21,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
-  List<Map<String, String>> quizzes = [];
+  List<Map<String, dynamic>> quizzes = [];
   UniqueCodeGenerator code_generator = UniqueCodeGenerator(maxSize: 1000);
+  final QuizService _quizService = QuizService();
 
   @override
   void initState() {
@@ -24,38 +31,77 @@ class _HomePageState extends State<HomePage> {
     _fetchQuizzes();
   }
 
-  Future<void> _fetchQuizzes() async {
-    final currentUser = Auth().currentUser;
-    if (currentUser == null) return; // Exit if no user is logged in
-
-    try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('quizzes')
-              .where(
-                'createdBy',
-                isEqualTo: currentUser.uid,
-              ) // Filter by user ID
-              .get();
-
-      setState(() {
-        quizzes =
-            snapshot.docs
-                .map(
-                  (doc) => {
-                    'id': doc.id,
-                    'name': doc['quizName'] as String,
-                    'createdBy': doc['createdBy'] as String,
-                  },
-                )
-                .toList();
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading quizzes: ${e.toString()}')),
-      );
-    }
+ Future<void> _fetchQuizzes() async {
+  final currentUserId = Auth().currentUser?.uid;
+  
+  // Return early if user is not logged in
+  if (currentUserId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('You must be logged in to view quizzes')),
+    );
+    return;
   }
+
+  try {
+    final userQuizzes = await _quizService.fetchUserQuizzes(currentUserId);
+    
+    setState(() {
+      quizzes = userQuizzes;
+    });
+
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error loading quizzes: ${e.toString()}')),
+    );
+  }
+}
+
+
+Future<void> createAndActivateQuiz({
+  required BuildContext context,
+  required Map<String, dynamic> quiz,
+}) async {
+  try {
+    // Generate necessary data
+    // Generate necessary data with null checks
+    final quizId = quiz['id'] ?? 'default_quiz_id';
+    final userId = quiz['createdBy'] ?? 'default_user_id';
+    final invitationCode = code_generator.generateCode();
+
+    if (quizId == 'default_quiz_id' || userId == 'default_user_id') {
+      throw Exception('Quiz ID or User ID is missing');
+    }
+
+    final activeid = await _quizService.activateQuiz(
+      invitationCode,
+      quizId,
+      userId,
+    );
+
+    if (activeid != null ) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WaitingPage(
+            activequizId: activeid,
+            userId: userId,
+            invitation_code: invitationCode,
+          ),
+        ),
+      );
+    } else {
+      throw Exception('Failed to activate quiz');
+    }
+  } catch (e) {
+    Fluttertoast.showToast(
+      msg: "Failed to create and activate quiz: ${e.toString()}",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+    );
+    rethrow; 
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -133,31 +179,12 @@ class _HomePageState extends State<HomePage> {
                                 children: [
                                   // Play Button (Green)
                                   ElevatedButton(
-                                    onPressed: () {
-                                      print('Full quiz object: $quiz');
-                                      print(
-                                        'Quiz ID: ${quiz['id'] ?? 'defaultQuizId'}',
-                                      );
-
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder:
-                                              (context) => WaitingPage(
-                                                quizId:
-                                                    quiz['id'] ??
-                                                    'defaultQuizId', // Provide fallback if null
-                                                userId:
-                                                    quiz['createdBy'] ??
-                                                    'defaultUserId',
-                                                invitation_code:
-                                                    code_generator
-                                                        .generateCode(),
-                                              ),
-                                        ),
-                                      );
-                                      print('User ID: ${quiz['createdBy']} ');
-                                    },
+                                    onPressed: () async {
+                                        await createAndActivateQuiz(
+                                          context: context,
+                                          quiz: quiz,
+                                        );
+                                      },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color.fromARGB(
                                         255,
@@ -194,16 +221,13 @@ class _HomePageState extends State<HomePage> {
                             ],
                           ),
                         ),
-                        // Close Button in top-right corner
                         Positioned(
                           right: 8,
                           top: 8,
                           child: GestureDetector(
                             onTap: () async {
-                              // Call deleteQuiz method
                               await QuizService().deleteQuiz(quiz['id']!);
 
-                              // Update the local quizzes list to remove the deleted quiz
                               setState(() {
                                 quizzes.removeWhere(
                                   (q) => q['id'] == quiz['id'],
@@ -238,47 +262,3 @@ class _HomePageState extends State<HomePage> {
 
        
 
-
-       
-/*
-class HomePage extends StatelessWidget {
-  HomePage({Key? key}) : super(key: key);
-
-  final user = Auth().currentUser;
-
-  Future<void> signOut() async {
-    await Auth().signOut();
-  }
-
-  Widget _title() {
-    return const Text("Home page");
-  }
-
-  Widget _userUid() {
-    return Text(user?.email ?? 'User Email');
-  }
-
-  Widget _signOutButton() {
-    return ElevatedButton(onPressed: signOut, child: const Text('Sign Out'));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: _title()), // AppBar
-      body: Container(
-        height: double.infinity,
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[_userUid(), _signOutButton()],
-        ), // Column
-      ), // Container
-    ); // Scaffold
-  }
-
-
-
-}*/

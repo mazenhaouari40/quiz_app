@@ -2,11 +2,54 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-enum quizState { count_down, started, leader_board, finished }
+//enum quizState { waiting, count_down, started, leader_board, finished }
 
 class QuizService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+Future<bool> joinQuiz( String code) async {
+
+      final quizQuery = await _db
+          .collection('actived_Quizzes')
+          .where('invitation_code', isEqualTo: code)
+          .limit(1)
+          .get();
+
+      if (quizQuery.docs.isEmpty) 
+          { return false;}
+
+    return true;
+  
+  }
+
+  Future<String?> activateQuiz(
+  String invitationCode,
+  String quizId,
+  String userId,
+) async {
+  try {
+    final activeQuizRef = _db.collection('actived_Quizzes').doc();
+    final activeQuizId = activeQuizRef.id;
+
+    // Create quiz data with empty participants subcollection
+    final activeQuizData = {
+      'id': activeQuizId,
+      'quizzId': quizId,
+      'num_actual_question': 0,
+      'createdBy': userId,
+      'status': 'waiting',
+      'invitation_code': invitationCode,
+    };
+
+    // Create the main document
+    await activeQuizRef.set(activeQuizData);
+    
+
+    return activeQuizId;
+  } catch (e) {
+    return null;
+  }
+}
   // Save a new quiz to Firestore
   Future<bool> saveNewQuiz(Map<String, dynamic> quiz) async {
     try {
@@ -42,20 +85,16 @@ class QuizService {
     }
   }
 
-  // Update an existing quiz in Firestore
   Future<bool> updateQuiz(Map<String, dynamic> quiz, String quizId) async {
     try {
-      // Get a reference to the quiz document
       final quizRef = _db.collection('quizzes').doc(quizId);
 
-      // Create updated quiz data
       final updatedQuizData = {
         'quizName': quiz['quizName'],
         'createdBy': quiz['user'],
         'questions': quiz['questions'],
       };
 
-      // Update the document
       await quizRef.update(updatedQuizData);
 
       Fluttertoast.showToast(
@@ -110,7 +149,7 @@ class QuizService {
           'id': doc.id,
           'name': doc['quizName'] as String,
           'createdBy': doc['createdBy'] as String,
-          // Include other fields you need
+
         };
       }).toList();
     } catch (e) {
@@ -129,43 +168,5 @@ class QuizService {
     }
   }
 
-  Future<bool> activateQuiz(
-    String invitation_code,
-    String quizId,
-    String userId,
-    Map<String, dynamic> participants,
-  ) async {
-    try {
-      // Create a new document reference with auto-generated ID
-      final newactQuizRef = _db.collection('actived_Quizzes').doc();
-      final actQuizID = newactQuizRef.id;
 
-      // Create  quiz data
-      final actQuizdata = {
-        'id': actQuizID,
-        'quizzId': quizId,
-        'num_actual_question': 0,
-        'createdBy': userId,
-        'invitation_code': invitation_code,
-        'participants': participants,
-      };
-
-      // Set the document data
-      await newactQuizRef.set(actQuizdata);
-
-      /*Fluttertoast.showToast(
-        msg: "Quiz saved successfully",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-      );*/
-      return true;
-    } catch (e) {
-      Fluttertoast.showToast(
-        msg: "Failed to start quiz",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-      );
-      return false;
-    }
-  }
 }
