@@ -12,23 +12,7 @@ class StartPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: customAppBar(
-        title: "Quiz App",
-        onLoginPressed: () {
-          // Navigate to Login page
-          /*Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => LoginPage()),
-          );*/
-        },
-        onSignUpPressed: () {
-          // Navigate to Sign Up page
-          /*Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => SignUpPage()),
-          );*/
-        },
-      ),
+      appBar: customAppBar(title: "Quiz App", onLoginPressed: onStart),
       body: Padding(
         padding: EdgeInsets.all(20),
         child: Column(
