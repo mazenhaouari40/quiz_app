@@ -16,7 +16,7 @@ class _UpdateQuizState extends State<UpdateQuiz> {
   List<String> questions = [];
   List<List<String>> options = [];
   List<Set<int>> correctAnswers = [];
-  List<int> questionMarks = [];
+List<int> tempsQuestion = [5000]; // Stocke le temps par question en millisecondes (par défaut 5s)
   int selectedQuestion = 0;
   bool isLoading = true;
 
@@ -64,8 +64,8 @@ class _UpdateQuizState extends State<UpdateQuiz> {
               [{}],
         );
 
-        questionMarks = List<int>.from(
-          quizData['questions']?.map((q) => q['marks'] as int? ?? 1) ?? [1],
+        tempsQuestion = List<int>.from(
+          quizData['questions']?.map((q) => q['tempsquestion'] as int? ?? 1) ?? [1],
         );
 
         isLoading = false;
@@ -81,7 +81,7 @@ class _UpdateQuizState extends State<UpdateQuiz> {
         correctAnswers = [
           {1},
         ];
-        questionMarks = [1];
+        tempsQuestion = [5000];
         isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -95,7 +95,7 @@ class _UpdateQuizState extends State<UpdateQuiz> {
       questions.add("New Question");
       options.add(["Option 1", "Option 2", "Option 3"]);
       correctAnswers.add({});
-      questionMarks.add(1);
+      tempsQuestion.add(5000);
       selectedQuestion = questions.length - 1;
     });
   }
@@ -116,7 +116,7 @@ class _UpdateQuizState extends State<UpdateQuiz> {
           'question': questions[i],
           'options': options[i],
           'correctAnswers': correctAnswers[i].toList(),
-          'marks': questionMarks[i],
+          'tempsquestion': tempsQuestion[i],
         });
       }
 
@@ -143,7 +143,7 @@ class _UpdateQuizState extends State<UpdateQuiz> {
 
   void removeOption(int index) {
     setState(() {
-      if (options[selectedQuestion].length > 2) {
+      if (options[selectedQuestion].length > 3) {
         // Minimum 2 options
         // Remove any correct answers pointing to this option
         correctAnswers[selectedQuestion].remove(index);
@@ -184,8 +184,11 @@ class _UpdateQuizState extends State<UpdateQuiz> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Container(
-                      width: constraints.maxWidth * 0.6,
+
+ Container(
+                      width:
+                          constraints.maxWidth *
+                          0.2, // Takes 60% of available width
                       child: TextField(
                         controller: _controller,
                         decoration: InputDecoration(
@@ -210,17 +213,23 @@ class _UpdateQuizState extends State<UpdateQuiz> {
                           ),
                         ),
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize:
+                              14, // Slightly larger for better readability
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                    Container(
-                      width: constraints.maxWidth * 0.3,
+
+
+
+ Container(
+                      width:
+                          constraints.maxWidth *
+                          0.1, // Takes 30% of available width
                       child: ElevatedButton(
                         onPressed: updateQuiz,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
+                          backgroundColor: Colors.blue, // Primary color
                           foregroundColor: Colors.white,
                           padding: EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -229,7 +238,7 @@ class _UpdateQuizState extends State<UpdateQuiz> {
                           elevation: 2,
                         ),
                         child: Text(
-                          "Update Quiz",
+                          "update Quiz",
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -237,6 +246,8 @@ class _UpdateQuizState extends State<UpdateQuiz> {
                         ),
                       ),
                     ),
+
+
                   ],
                 );
               },
@@ -379,27 +390,23 @@ class _UpdateQuizState extends State<UpdateQuiz> {
                                     horizontal: 12,
                                   ),
                                   child: DropdownButton<int>(
-                                    value: questionMarks[selectedQuestion],
+                                    value: tempsQuestion[selectedQuestion],
                                     onChanged: (int? newValue) {
                                       if (newValue != null) {
                                         setState(() {
-                                          questionMarks[selectedQuestion] =
+                                          tempsQuestion[selectedQuestion] =
                                               newValue;
                                         });
                                       }
                                     },
                                     isExpanded: true,
                                     underline: Container(),
-                                    items:
-                                        [1, 2, 3, 4].map((int value) {
-                                          return DropdownMenuItem<int>(
-                                            value: value,
-                                            child: Text(
-                                              "$value point${value > 1 ? 's' : ''}",
-                                              style: TextStyle(fontSize: 16),
-                                            ),
-                                          );
-                                        }).toList(),
+                                    items: [5000, 10000, 15000, 20000].map((int value) { // Valeurs en ms
+                                      return DropdownMenuItem<int>(
+                                        value: value,
+                                        child: Text("${value ~/ 1000} sec"), // Convertir en secondes pour affichage
+                                      );
+                                    }).toList(),
                                   ),
                                 ),
                               ],

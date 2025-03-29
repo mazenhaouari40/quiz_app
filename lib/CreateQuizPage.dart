@@ -22,7 +22,7 @@ class _QuizPageState extends State<QuizPage> {
   List<Set<int>> correctAnswers = [
     {1},
   ]; // Index of correct options
-  List<int> questionMarks = [1]; // Stores marks for each question
+List<int> tempsQuestion = [5000]; // Stocke le temps par question en millisecondes (par défaut 5s)
   int selectedQuestion = 0;
 
   void addNewQuestion() {
@@ -30,7 +30,7 @@ class _QuizPageState extends State<QuizPage> {
       questions.add("New Question");
       options.add(["Option 1", "Option 2", "Option 3"]);
       correctAnswers.add({});
-      questionMarks.add(1);
+      tempsQuestion.add(5000);
     });
   }
 
@@ -51,7 +51,7 @@ class _QuizPageState extends State<QuizPage> {
           'question': questions[i],
           'options': options[i],
           'correctAnswers': correctAnswers[i].toList(),
-          'marks': questionMarks[i],
+          'tempsquestion': tempsQuestion[i],
         });
       }
 
@@ -316,32 +316,27 @@ class _QuizPageState extends State<QuizPage> {
                                   ),
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 12,
-                                  ),
+                                  ),   
+
+
                                   child: DropdownButton<int>(
-                                    value: questionMarks[selectedQuestion],
+                                    value: tempsQuestion[selectedQuestion], // Nouvelle variable "tempsQuestion"
                                     onChanged: (int? newValue) {
                                       if (newValue != null) {
                                         setState(() {
-                                          questionMarks[selectedQuestion] =
-                                              newValue;
+                                          tempsQuestion[selectedQuestion] = newValue;
                                         });
                                       }
                                     },
-                                    isExpanded:
-                                        true, // Makes dropdown fill the container
-                                    underline:
-                                        Container(), // Removes default underline
-                                    items:
-                                        [1, 2, 3, 4].map((int value) {
-                                          return DropdownMenuItem<int>(
-                                            value: value,
-                                            child: Text(
-                                              "$value point${value > 1 ? 's' : ''}",
-                                              style: TextStyle(fontSize: 16),
-                                            ),
-                                          );
-                                        }).toList(),
+                                    items: [5000, 10000, 15000, 20000].map((int value) { // Valeurs en ms
+                                      return DropdownMenuItem<int>(
+                                        value: value,
+                                        child: Text("${value ~/ 1000} sec"), // Convertir en secondes pour affichage
+                                      );
+                                    }).toList(),
                                   ),
+
+                                  
                                 ),
                               ],
                             ),
