@@ -30,44 +30,62 @@ class _UpdateQuizState extends State<UpdateQuiz> {
   Future<void> _loadQuizData() async {
     try {
       final quizData = await QuizService().fetchQuizById(widget.quizId);
-      
+
       setState(() {
-        _controller = TextEditingController(text: quizData['quizName'] ?? "Untitled Quiz");
-        
+        _controller = TextEditingController(
+          text: quizData['quizName'] ?? "Untitled Quiz",
+        );
+
         // Initialize questions and options from the loaded data
         questions = List<String>.from(
-          quizData['questions']?.map((q) => q['question'] as String) ?? ["New Question"]
+          quizData['questions']?.map((q) => q['question'] as String) ??
+              ["New Question"],
         );
-        
+
         options = List<List<String>>.from(
-          quizData['questions']?.map((q) => List<String>.from(q['options'] ?? ["Option 1", "Option 2"])) ?? [["Option 1", "Option 2"]]
+          quizData['questions']?.map(
+                (q) =>
+                    List<String>.from(q['options'] ?? ["Option 1", "Option 2"]),
+              ) ??
+              [
+                ["Option 1", "Option 2"],
+              ],
         );
-        
+
         correctAnswers = List<Set<int>>.from(
-          quizData['questions']?.map((q) => 
-            Set<int>.from((q['correctAnswers'] as List<dynamic>?)?.map((e) => e as int) ?? [0])
-          ) ?? [{}]
+          quizData['questions']?.map(
+                (q) => Set<int>.from(
+                  (q['correctAnswers'] as List<dynamic>?)?.map(
+                        (e) => e as int,
+                      ) ??
+                      [0],
+                ),
+              ) ??
+              [{}],
         );
-        
+
         questionMarks = List<int>.from(
-          quizData['questions']?.map((q) => q['marks'] as int? ?? 1) ?? [1]
+          quizData['questions']?.map((q) => q['marks'] as int? ?? 1) ?? [1],
         );
-        
+
         isLoading = false;
       });
-      
     } catch (e) {
       // Fallback to default values if loading fails
       setState(() {
         _controller = TextEditingController(text: "My first quiz");
         questions = ["What does HIPAA protect?"];
-        options = [["Doctor credentials", "Patient data", "Hospital policies"]];
-        correctAnswers = [{1}];
+        options = [
+          ["Doctor credentials", "Patient data", "Hospital policies"],
+        ];
+        correctAnswers = [
+          {1},
+        ];
         questionMarks = [1];
         isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading quiz: ${e.toString()}'))
+        SnackBar(content: Text('Error loading quiz: ${e.toString()}')),
       );
     }
   }
@@ -90,7 +108,7 @@ class _UpdateQuizState extends State<UpdateQuiz> {
       Map<String, dynamic> quizData = {
         'quizName': quizName,
         'user': user,
-        'questions': []
+        'questions': [],
       };
 
       for (int i = 0; i < questions.length; i++) {
@@ -98,20 +116,20 @@ class _UpdateQuizState extends State<UpdateQuiz> {
           'question': questions[i],
           'options': options[i],
           'correctAnswers': correctAnswers[i].toList(),
-          'marks': questionMarks[i]
+          'marks': questionMarks[i],
         });
       }
 
       QuizService().updateQuiz(quizData, widget.quizId);
-      
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => HomePage()),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error updating quiz: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error updating quiz: $e")));
     }
   }
 
@@ -125,13 +143,15 @@ class _UpdateQuizState extends State<UpdateQuiz> {
 
   void removeOption(int index) {
     setState(() {
-      if (options[selectedQuestion].length > 2) { // Minimum 2 options
+      if (options[selectedQuestion].length > 2) {
+        // Minimum 2 options
         // Remove any correct answers pointing to this option
         correctAnswers[selectedQuestion].remove(index);
         // Adjust other correct answers if they were after this index
-        correctAnswers[selectedQuestion] = correctAnswers[selectedQuestion].map((ans) {
-          return ans > index ? ans - 1 : ans;
-        }).toSet();
+        correctAnswers[selectedQuestion] =
+            correctAnswers[selectedQuestion].map((ans) {
+              return ans > index ? ans - 1 : ans;
+            }).toSet();
         options[selectedQuestion].removeAt(index);
       }
     });
@@ -153,9 +173,7 @@ class _UpdateQuizState extends State<UpdateQuiz> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Update Quiz'),
-      ),
+      appBar: AppBar(title: Text('Update Quiz')),
       body: Column(
         children: [
           Padding(
@@ -178,11 +196,17 @@ class _UpdateQuizState extends State<UpdateQuiz> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.blue, width: 1.5),
+                            borderSide: BorderSide(
+                              color: Colors.blue,
+                              width: 1.5,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.blueAccent, width: 1.5),
+                            borderSide: BorderSide(
+                              color: Colors.blueAccent,
+                              width: 1.5,
+                            ),
                           ),
                         ),
                         style: TextStyle(
@@ -250,17 +274,28 @@ class _UpdateQuizState extends State<UpdateQuiz> {
                           itemCount: questions.length,
                           itemBuilder: (context, index) {
                             return Container(
-                              margin: EdgeInsets.symmetric(vertical: 12, horizontal: 18),
+                              margin: EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 18,
+                              ),
                               decoration: BoxDecoration(
-                                color: selectedQuestion == index ? Colors.black : Colors.white,
+                                color:
+                                    selectedQuestion == index
+                                        ? Colors.black
+                                        : Colors.white,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(color: Colors.black),
                               ),
                               child: ListTile(
                                 title: Text(
-                                  questions[index].isNotEmpty ? questions[index] : "Untitled Question",
+                                  questions[index].isNotEmpty
+                                      ? questions[index]
+                                      : "Untitled Question",
                                   style: TextStyle(
-                                    color: selectedQuestion == index ? Colors.white : Colors.black,
+                                    color:
+                                        selectedQuestion == index
+                                            ? Colors.white
+                                            : Colors.black,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -295,13 +330,23 @@ class _UpdateQuizState extends State<UpdateQuiz> {
                                   child: Container(
                                     margin: const EdgeInsets.only(right: 16.0),
                                     decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey[300]!),
+                                      border: Border.all(
+                                        color: Colors.grey[300]!,
+                                      ),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
                                     child: TextField(
-                                      controller: TextEditingController(text: questions[selectedQuestion])
-                                        ..selection = TextSelection.collapsed(offset: questions[selectedQuestion].length),
+                                      controller: TextEditingController(
+                                          text: questions[selectedQuestion],
+                                        )
+                                        ..selection = TextSelection.collapsed(
+                                          offset:
+                                              questions[selectedQuestion]
+                                                  .length,
+                                        ),
                                       onChanged: (value) {
                                         setState(() {
                                           questions[selectedQuestion] = value;
@@ -314,7 +359,10 @@ class _UpdateQuizState extends State<UpdateQuiz> {
                                       decoration: InputDecoration(
                                         border: InputBorder.none,
                                         hintText: "Enter question",
-                                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              vertical: 12,
+                                            ),
                                       ),
                                     ),
                                   ),
@@ -322,30 +370,36 @@ class _UpdateQuizState extends State<UpdateQuiz> {
                                 Container(
                                   width: 120,
                                   decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey[300]!),
+                                    border: Border.all(
+                                      color: Colors.grey[300]!,
+                                    ),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
                                   child: DropdownButton<int>(
                                     value: questionMarks[selectedQuestion],
                                     onChanged: (int? newValue) {
                                       if (newValue != null) {
                                         setState(() {
-                                          questionMarks[selectedQuestion] = newValue;
+                                          questionMarks[selectedQuestion] =
+                                              newValue;
                                         });
                                       }
                                     },
                                     isExpanded: true,
                                     underline: Container(),
-                                    items: [1, 2, 3, 4].map((int value) {
-                                      return DropdownMenuItem<int>(
-                                        value: value,
-                                        child: Text(
-                                          "$value point${value > 1 ? 's' : ''}",
-                                          style: TextStyle(fontSize: 16),
-                                        ),
-                                      );
-                                    }).toList(),
+                                    items:
+                                        [1, 2, 3, 4].map((int value) {
+                                          return DropdownMenuItem<int>(
+                                            value: value,
+                                            child: Text(
+                                              "$value point${value > 1 ? 's' : ''}",
+                                              style: TextStyle(fontSize: 16),
+                                            ),
+                                          );
+                                        }).toList(),
                                   ),
                                 ),
                               ],
@@ -353,43 +407,62 @@ class _UpdateQuizState extends State<UpdateQuiz> {
                           ),
                           SizedBox(height: 5),
                           Column(
-                            children: List.generate(options[selectedQuestion].length, (index) {
-                              return Container(
-                                margin: EdgeInsets.only(top: 12.0),
-                                child: Row(
-                                  children: [
-                                    Checkbox(
-                                      value: correctAnswers[selectedQuestion].contains(index),
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          if (value == true) {
-                                            correctAnswers[selectedQuestion].add(index);
-                                          } else {
-                                            correctAnswers[selectedQuestion].remove(index);
-                                          }
-                                        });
-                                      },
-                                    ),
-                                    Expanded(
-                                      child: TextField(
-                                        controller: TextEditingController(text: options[selectedQuestion][index])
-                                          ..selection = TextSelection.collapsed(offset: options[selectedQuestion][index].length),
-                                        onChanged: (value) {
+                            children: List.generate(
+                              options[selectedQuestion].length,
+                              (index) {
+                                return Container(
+                                  margin: EdgeInsets.only(top: 12.0),
+                                  child: Row(
+                                    children: [
+                                      Checkbox(
+                                        value: correctAnswers[selectedQuestion]
+                                            .contains(index),
+                                        onChanged: (bool? value) {
                                           setState(() {
-                                            options[selectedQuestion][index] = value;
+                                            if (value == true) {
+                                              correctAnswers[selectedQuestion]
+                                                  .add(index);
+                                            } else {
+                                              correctAnswers[selectedQuestion]
+                                                  .remove(index);
+                                            }
                                           });
                                         },
-                                        decoration: InputDecoration(border: OutlineInputBorder()),
                                       ),
-                                    ),
-                                    IconButton(
-                                      icon: Icon(Icons.close, color: Colors.red),
-                                      onPressed: () => removeOption(index),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: TextEditingController(
+                                              text:
+                                                  options[selectedQuestion][index],
+                                            )
+                                            ..selection = TextSelection.collapsed(
+                                              offset:
+                                                  options[selectedQuestion][index]
+                                                      .length,
+                                            ),
+                                          onChanged: (value) {
+                                            setState(() {
+                                              options[selectedQuestion][index] =
+                                                  value;
+                                            });
+                                          },
+                                          decoration: InputDecoration(
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.close,
+                                          color: Colors.red,
+                                        ),
+                                        onPressed: () => removeOption(index),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                           if (options[selectedQuestion].length < 5)
                             Container(
@@ -402,7 +475,10 @@ class _UpdateQuizState extends State<UpdateQuiz> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.zero,
                                     ),
-                                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 12,
+                                    ),
                                   ),
                                   child: Text(
                                     "New Option",

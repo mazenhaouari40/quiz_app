@@ -1,6 +1,7 @@
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:quiz_app/services/utils.dart';
+import 'package:quiz_app/waiting_room_page.dart';
 import 'services/auth.dart';
 import 'CreateQuizPage.dart';
 import 'UpdateQuiz.dart'; // Add this import
@@ -15,6 +16,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, String>> quizzes = [];
+  UniqueCodeGenerator code_generator = UniqueCodeGenerator(maxSize: 1000);
 
   @override
   void initState() {
@@ -22,37 +24,43 @@ class _HomePageState extends State<HomePage> {
     _fetchQuizzes();
   }
 
- Future<void> _fetchQuizzes() async {
-  final currentUser = Auth().currentUser;
-  if (currentUser == null) return; // Exit if no user is logged in
+  Future<void> _fetchQuizzes() async {
+    final currentUser = Auth().currentUser;
+    if (currentUser == null) return; // Exit if no user is logged in
 
-  try {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('quizzes')
-        .where('createdBy', isEqualTo: currentUser.uid) // Filter by user ID
-        .get();
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('quizzes')
+              .where(
+                'createdBy',
+                isEqualTo: currentUser.uid,
+              ) // Filter by user ID
+              .get();
 
-    setState(() {
-      quizzes = snapshot.docs.map((doc) => {
-        'id': doc.id,
-        'name': doc['quizName'] as String,
-      }).toList();
-    });
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error loading quizzes: ${e.toString()}')),
-    );
+      setState(() {
+        quizzes =
+            snapshot.docs
+                .map(
+                  (doc) => {
+                    'id': doc.id,
+                    'name': doc['quizName'] as String,
+                    'createdBy': doc['createdBy'] as String,
+                  },
+                )
+                .toList();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading quizzes: ${e.toString()}')),
+      );
+    }
   }
-}
-
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: "HomePage",
-      ),
+      appBar: CustomAppBar(title: "HomePage"),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -71,10 +79,7 @@ class _HomePageState extends State<HomePage> {
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(horizontal: 12),
                     ),
-                    child: Text(
-                      "New Quiz",
-                      style: TextStyle(fontSize: 14),
-                    ),
+                    child: Text("New Quiz", style: TextStyle(fontSize: 14)),
                   ),
                 ),
                 Expanded(child: SizedBox.shrink()),
@@ -106,83 +111,115 @@ class _HomePageState extends State<HomePage> {
                 itemCount: quizzes.length,
                 itemBuilder: (context, index) {
                   final quiz = quizzes[index];
-               return Card(
-  child: Stack(
-    children: [
-      Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              quiz['name']!,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // Play Button (Green)
-                ElevatedButton(
-                  onPressed: () {
-                    // Add play functionality
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 54, 244, 76),
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                  ),
-                  child: Text(
-                    "Play",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-                // Update Button
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => UpdateQuiz(
-                          quizId: quiz['id']!,
+                  return Card(
+                    child: Stack(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                quiz['name']!,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  // Play Button (Green)
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      print('Full quiz object: $quiz');
+                                      print(
+                                        'Quiz ID: ${quiz['id'] ?? 'defaultQuizId'}',
+                                      );
+
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) => WaitingPage(
+                                                quizId:
+                                                    quiz['id'] ??
+                                                    'defaultQuizId', // Provide fallback if null
+                                                userId:
+                                                    quiz['createdBy'] ??
+                                                    'defaultUserId',
+                                                invitation_code:
+                                                    code_generator
+                                                        .generateCode(),
+                                              ),
+                                        ),
+                                      );
+                                      print('User ID: ${quiz['createdBy']} ');
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color.fromARGB(
+                                        255,
+                                        54,
+                                        244,
+                                        76,
+                                      ),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      "Play",
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                  // Update Button
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) => UpdateQuiz(
+                                                quizId: quiz['id']!,
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                    child: Text("Update"),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                  child: Text("Update"),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-      // Close Button in top-right corner
-      Positioned(
-        right: 8,
-        top: 8,
-        child: GestureDetector(
-    onTap: () async {
-      // Call deleteQuiz method
-      await QuizService().deleteQuiz(quiz['id']!);
-      
-      // Update the local quizzes list to remove the deleted quiz
-      setState(() {
-        quizzes.removeWhere((q) => q['id'] == quiz['id']);
-      });
-    },
-          child: Icon(
-            Icons.close,
-            color: Colors.red,
-            size: 24,
-          ),
-        ),
-      ),
-    ],
-  ),
-);
-             
+                        // Close Button in top-right corner
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: GestureDetector(
+                            onTap: () async {
+                              // Call deleteQuiz method
+                              await QuizService().deleteQuiz(quiz['id']!);
+
+                              // Update the local quizzes list to remove the deleted quiz
+                              setState(() {
+                                quizzes.removeWhere(
+                                  (q) => q['id'] == quiz['id'],
+                                );
+                              });
+                            },
+                            child: Icon(
+                              Icons.close,
+                              color: Colors.red,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
                 },
               ),
             ),
