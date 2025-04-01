@@ -168,5 +168,37 @@ Future<bool> joinQuiz( String code) async {
     }
   }
 
-
+Future<void> changeGameStatus(String gameStatus, String activeQuizId) async {
+  await _db.collection("actived_Quizzes").doc(activeQuizId).update({"status": gameStatus});
 }
+
+
+Future<Map<String, dynamic>> fetchQuizById_fromActived_quizzes(String activequizId) async {
+  try {
+    DocumentSnapshot activeQuizSnapshot =
+        await _db.collection("actived_Quizzes").doc(activequizId).get();
+
+    if (activeQuizSnapshot.exists) {
+      Map<String, dynamic> activeQuiz = activeQuizSnapshot.data() as Map<String, dynamic>;
+      String quizId = activeQuiz["quizzId"];
+
+      return await fetchQuizById(quizId);
+    } else {
+      print("Active quiz not found.");
+      return {}; // Return an empty map if the document doesn't exist
+    }
+  } catch (e) {
+    print("Error fetching active quiz: $e");
+    return {}; // Return an empty map in case of an error
+  }
+}
+
+  
+  
+  
+  
+  
+  
+  
+  
+  }
