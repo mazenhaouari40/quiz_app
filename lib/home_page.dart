@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:quiz_app/services/utils.dart';
-import 'package:quiz_app/waiting_room_page.dart';
+import 'package:quiz_app/quiz_flow.dart';
 import 'services/auth.dart';
 import 'CreateQuizPage.dart';
 import 'UpdateQuiz.dart'; // Add this import
@@ -10,9 +10,7 @@ import 'services/quiz.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'services/quiz.dart';
 
-enum quizState { 
-  waiting, count_down, started, leader_board, finished 
-  }
+enum quizState { waiting, count_down, started, leader_board, finished }
 
 class HomePage extends StatefulWidget {
   @override
@@ -31,77 +29,75 @@ class _HomePageState extends State<HomePage> {
     _fetchQuizzes();
   }
 
- Future<void> _fetchQuizzes() async {
-  final currentUserId = Auth().currentUser?.uid;
-  
-  // Return early if user is not logged in
-  if (currentUserId == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('You must be logged in to view quizzes')),
-    );
-    return;
-  }
+  Future<void> _fetchQuizzes() async {
+    final currentUserId = Auth().currentUser?.uid;
 
-  try {
-    final userQuizzes = await _quizService.fetchUserQuizzes(currentUserId);
-    
-    setState(() {
-      quizzes = userQuizzes;
-    });
-
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error loading quizzes: ${e.toString()}')),
-    );
-  }
-}
-
-
-Future<void> createAndActivateQuiz({
-  required BuildContext context,
-  required Map<String, dynamic> quiz,
-}) async {
-  try {
-    // Generate necessary data
-    // Generate necessary data with null checks
-    final quizId = quiz['id'] ?? 'default_quiz_id';
-    final userId = quiz['createdBy'] ?? 'default_user_id';
-    final invitationCode = code_generator.generateCode();
-
-    if (quizId == 'default_quiz_id' || userId == 'default_user_id') {
-      throw Exception('Quiz ID or User ID is missing');
-    }
-
-    final activeid = await _quizService.activateQuiz(
-      invitationCode,
-      quizId,
-      userId,
-    );
-
-    if (activeid != null ) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => WaitingPage(
-            activequizId: activeid,
-            userId: userId,
-            invitation_code: invitationCode,
-          ),
-        ),
+    // Return early if user is not logged in
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You must be logged in to view quizzes')),
       );
-    } else {
-      throw Exception('Failed to activate quiz');
+      return;
     }
-  } catch (e) {
-    Fluttertoast.showToast(
-      msg: "Failed to create and activate quiz: ${e.toString()}",
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-    );
-    rethrow; 
-  }
-}
 
+    try {
+      final userQuizzes = await _quizService.fetchUserQuizzes(currentUserId);
+
+      setState(() {
+        quizzes = userQuizzes;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading quizzes: ${e.toString()}')),
+      );
+    }
+  }
+
+  Future<void> createAndActivateQuiz({
+    required BuildContext context,
+    required Map<String, dynamic> quiz,
+  }) async {
+    try {
+      // Generate necessary data
+      // Generate necessary data with null checks
+      final quizId = quiz['id'] ?? 'default_quiz_id';
+      final userId = quiz['createdBy'] ?? 'default_user_id';
+      final invitationCode = code_generator.generateCode();
+
+      if (quizId == 'default_quiz_id' || userId == 'default_user_id') {
+        throw Exception('Quiz ID or User ID is missing');
+      }
+
+      final activeid = await _quizService.activateQuiz(
+        invitationCode,
+        quizId,
+        userId,
+      );
+
+      if (activeid != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => WaitingPage(
+                  activequizId: activeid,
+                  userId: userId,
+                  invitation_code: invitationCode,
+                ),
+          ),
+        );
+      } else {
+        throw Exception('Failed to activate quiz');
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Failed to create and activate quiz: ${e.toString()}",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+      rethrow;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -180,11 +176,11 @@ Future<void> createAndActivateQuiz({
                                   // Play Button (Green)
                                   ElevatedButton(
                                     onPressed: () async {
-                                        await createAndActivateQuiz(
-                                          context: context,
-                                          quiz: quiz,
-                                        );
-                                      },
+                                      await createAndActivateQuiz(
+                                        context: context,
+                                        quiz: quiz,
+                                      );
+                                    },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color.fromARGB(
                                         255,
@@ -259,6 +255,3 @@ Future<void> createAndActivateQuiz({
     super.dispose();
   }
 }
-
-       
-
