@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'services/quiz.dart';
+
 enum GameStatus {
   waiting,
   countdown,
@@ -107,7 +108,6 @@ Future<void> _removeUser(String participantId) async {
         _participantData = query.docs.map((doc) => doc.data()).toList();
 
       
-      // Jouer les sons si nécessaire
     } catch (e) {
       print('Error fetching participants: $e');
     }

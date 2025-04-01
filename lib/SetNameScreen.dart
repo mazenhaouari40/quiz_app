@@ -4,9 +4,6 @@ import 'waiting_room_page.dart';
 class SetNameScreen extends StatefulWidget {
   final String quizCode;
   final String activatequizId;
-//  final String activeId;
-
-
   const SetNameScreen({
     Key? key,
     required this.quizCode,
