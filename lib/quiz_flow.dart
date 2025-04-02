@@ -584,12 +584,12 @@ class _WaitingPageState extends State<WaitingPage>
   }*/
 
   /* Replace participant with the BE */
-  List<Map<String, dynamic>> participantsData = [
+  /*List<Map<String, dynamic>> participantsData = [
     {'displayName': 'Alice', 'score': 90, 'userid': '001'},
     {'displayName': 'Bob', 'score': 80, 'userid': '002'},
     {'displayName': 'Charlie', 'score': 85, 'userid': '003'},
     {'displayName': 'David', 'score': 70, 'userid': '004'},
-  ];
+  ];*/
 
 
 
