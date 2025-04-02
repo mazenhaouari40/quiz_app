@@ -44,12 +44,14 @@ class _WaitingPageState extends State<WaitingPage>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   final QuizService _quizService = QuizService();
-  //variable to set status
-  int _currentQuizNumber = -1;
+  int _currentQuizNumber = 0;
   GameStatus _gameStatus = GameStatus.waiting;
   bool _isHost = false;
   StreamSubscription? _quizSubscription;
+
   List<Map<String, dynamic>> _participantData = [];
+  late Map<String, dynamic> currentQuestion ;
+  int? _numberquestion ;
 
   GameStatus _parseGameStatus(String status) {
     switch (status) {
@@ -67,38 +69,58 @@ class _WaitingPageState extends State<WaitingPage>
         return GameStatus.waiting;
     }
   }
+  String gameStatusToString(GameStatus status) {
+  switch (status) {
+    case GameStatus.waiting:
+      return 'waiting';
+    case GameStatus.countdown:
+      return 'countdown';
+    case GameStatus.started:
+      return 'started';
+    case GameStatus.leaderboard:
+      return 'leaderboard';
+    case GameStatus.finished:
+      return 'finished';
+    default:
+      return 'waiting';
+  }
+}
 
   @override
   void initState() {
     super.initState();
+    _loadQuestion();
     _controller = AnimationController(
       vsync: this,
       duration: Duration(seconds: 2),
     )..repeat(reverse: true);
     _fadeAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(_controller);
     _setupFirebaseListener();
+
+  }
+
+  Future<void> _loadQuestion() async {
+     currentQuestion = await _quizService.fetchQuestionByIdFromActiveQuizzes(
+        widget.activequizId,
+        _currentQuizNumber,
+      );
+      _numberquestion = await _quizService.fetchNumberQuestions(widget.activequizId);
+
   }
 
     @override
   Widget build(BuildContext context) {
-
     switch (_gameStatus) {
       case GameStatus.waiting:
               return _waiting_room();
       case GameStatus.countdown:
               return _count_down();
-      case GameStatus.countdown:
-        // TODO: Handle this case.
-        throw UnimplementedError();
       case GameStatus.started:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        return _question_screen();
       case GameStatus.leaderboard:
-        // TODO: Handle this case.
-        throw UnimplementedError();
       case GameStatus.finished:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+          return _buildleaderboardScreen() ;
+
     }  
     }
 
@@ -331,13 +353,17 @@ class _WaitingPageState extends State<WaitingPage>
         .doc(widget.activequizId);
 
     _quizSubscription = activeQuizRef.snapshots().listen((docSnapshot) {
+          if (!mounted) return; // Check if widget is still in tree
+
       if (docSnapshot.exists) {
         final data = docSnapshot.data()!;
         setState(() {
           _isHost = data['createdBy'] == widget.userId;
           _gameStatus = _parseGameStatus(data['status']);
-          _currentQuizNumber = data['curQuestionNumber'] ?? -1;
+          _currentQuizNumber = data['num_actual_question'] ?? -1;
         });
+            _loadQuestion();
+
       }
     });
 
@@ -363,12 +389,11 @@ class _WaitingPageState extends State<WaitingPage>
 
 
   }
-
  
 //question
   Widget _question_screen() {
     /* replace the question with the backend */
-    final Map<String, dynamic> questionData = {
+   /* final Map<String, dynamic> questionData = {
       "mappage": 0,
       "correctAnswers": [0, 1],
       "options": [
@@ -379,11 +404,22 @@ class _WaitingPageState extends State<WaitingPage>
       ],
       "question": "What does NLP stand for?",
       "tempsquestion": 10000,
+    };*/
+
+    final Map<String, dynamic> questionData = {
+      "mappage": _currentQuizNumber, // Use default if null
+  "correctAnswers": List<int>.from(currentQuestion['correctAnswers'] ?? []),
+  "options": List<String>.from(currentQuestion['options'] ?? []),
+  "question": currentQuestion['question'] ?? currentQuestion['text'] ?? 'No question available',
+  "tempsquestion": currentQuestion['tempsquestion'] ?? currentQuestion['duration'] ?? 10000,
     };
+
 
     List<int> selectedAnswers = [];
     int timeLeft = questionData["tempsquestion"] ~/ 1000;
-
+    int timeuser = timeLeft;
+    List<int> correctAnswers =
+            (questionData["correctAnswers"] as List).cast<int>();
     Timer? timer;
 
     return StatefulBuilder(
@@ -392,15 +428,14 @@ class _WaitingPageState extends State<WaitingPage>
         if (timer == null || !timer!.isActive) {
           timer = Timer.periodic(const Duration(seconds: 1), (timer) {
             if (timeLeft > 0) {
-              setState(() {
-                timeLeft--;
-              });
+              setState(() => timeLeft--);
             } else {
               timer.cancel();
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => leaderboardScreen()),
-              );
+              if (!_isHost){
+                  _quizService.setscoreparticipant(selectedAnswers, widget.userId, timeuser, widget.activequizId, correctAnswers)  ;
+                }
+                          QuizService().changeGameStatus("leaderboard", widget.activequizId);
+
             }
           });
         }
@@ -438,10 +473,11 @@ class _WaitingPageState extends State<WaitingPage>
                       } else {
                         selectedAnswers.add(index);
                       }
+                       timeuser = timeLeft;
                     });
                   }, setState),
                 ),
-                _buildSubmitButton(selectedAnswers),
+               // _buildSubmitButton(selectedAnswers,correctAnswers),
               ],
             ),
           ),
@@ -473,7 +509,6 @@ class _WaitingPageState extends State<WaitingPage>
       ),
     );
   }
-  //-------------question 
 
   Widget _buildOptionsList(
     List<String> options,
@@ -524,12 +559,15 @@ class _WaitingPageState extends State<WaitingPage>
     );
   }
 
-  Widget _buildSubmitButton(List<int> selectedAnswers) {
+
+
+ /* Widget _buildSubmitButton(List<int> selectedAnswers,List<int> correctAnswers) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () {
           /* replace this with the score for the participant */
+
           print("Selected Answers: $selectedAnswers");
         },
         style: ElevatedButton.styleFrom(
@@ -543,7 +581,7 @@ class _WaitingPageState extends State<WaitingPage>
         ),
       ),
     );
-  }
+  }*/
 
   /* Replace participant with the BE */
   List<Map<String, dynamic>> participantsData = [
@@ -553,7 +591,9 @@ class _WaitingPageState extends State<WaitingPage>
     {'displayName': 'David', 'score': 70, 'userid': '004'},
   ];
 
-  List<Map<String, dynamic>> createParticipants(
+
+
+ /* List<Map<String, dynamic>> createParticipants(
     List<Map<String, dynamic>> participantData,
   ) {
     return participantData.map((data) {
@@ -563,20 +603,28 @@ class _WaitingPageState extends State<WaitingPage>
         'id': data['userid'],
       };
     }).toList();
-  }
+  }*/
 
-  Widget leaderboardScreen() {
+  Widget _buildleaderboardScreen() {
     /*Replace this with the backend */
-    final participants = createParticipants(participantsData);
+   // final participants = createParticipants(participantsData);
     return LeaderboardScreen(
-      participants,
+      _participantData,
+      _isHost,
+      gameStatusToString(_gameStatus),
       onNextQuestion: () {
         // Handle next question navigation
         /* Replace this with the backend */
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => _count_down()),
-        );
+    if ((_currentQuizNumber + 1) < _numberquestion!) {
+                              QuizService().changeGameStatusandcurrentquestion("countdown", widget.activequizId,_currentQuizNumber + 1);
+    }else{
+                              QuizService().changeGameStatus("finished", widget.activequizId);
+
+              /*Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => _count_down()),
+              );*/
+    }
       },
     );
   }
@@ -585,15 +633,16 @@ class _WaitingPageState extends State<WaitingPage>
     return CountdownScreen(
       onCountdownComplete: () {
         // This callback runs when countdown finishes
-        Navigator.pushReplacement(
+      /*  Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => _question_screen()),
-        );
+        );*/
+                                  QuizService().changeGameStatus("started", widget.activequizId);
+
+
       },
     );
   }
-
-
 
 
    @override

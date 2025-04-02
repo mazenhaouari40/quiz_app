@@ -7,7 +7,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 class QuizService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-Future<bool> joinQuiz( String code) async {
+    Future<bool> joinQuiz( String code) async {
 
       final quizQuery = await _db
           .collection('actived_Quizzes')
@@ -22,34 +22,34 @@ Future<bool> joinQuiz( String code) async {
   
   }
 
-  Future<String?> activateQuiz(
-  String invitationCode,
-  String quizId,
-  String userId,
-) async {
-  try {
-    final activeQuizRef = _db.collection('actived_Quizzes').doc();
-    final activeQuizId = activeQuizRef.id;
+    Future<String?> activateQuiz(
+    String invitationCode,
+    String quizId,
+    String userId,
+  ) async {
+    try {
+      final activeQuizRef = _db.collection('actived_Quizzes').doc();
+      final activeQuizId = activeQuizRef.id;
 
-    // Create quiz data with empty participants subcollection
-    final activeQuizData = {
-      'id': activeQuizId,
-      'quizzId': quizId,
-      'num_actual_question': 0,
-      'createdBy': userId,
-      'status': 'waiting',
-      'invitation_code': invitationCode,
-    };
+      // Create quiz data with empty participants subcollection
+      final activeQuizData = {
+        'id': activeQuizId,
+        'quizzId': quizId,
+        'num_actual_question': 0,
+        'createdBy': userId,
+        'status': 'waiting',
+        'invitation_code': invitationCode,
+      };
 
-    // Create the main document
-    await activeQuizRef.set(activeQuizData);
-    
+      // Create the main document
+      await activeQuizRef.set(activeQuizData);
+      
 
-    return activeQuizId;
-  } catch (e) {
-    return null;
+      return activeQuizId;
+    } catch (e) {
+      return null;
+    }
   }
-}
   // Save a new quiz to Firestore
   Future<bool> saveNewQuiz(Map<String, dynamic> quiz) async {
     try {
@@ -168,36 +168,118 @@ Future<bool> joinQuiz( String code) async {
     }
   }
 
-Future<void> changeGameStatus(String gameStatus, String activeQuizId) async {
-  await _db.collection("actived_Quizzes").doc(activeQuizId).update({"status": gameStatus});
-}
-
-
-Future<Map<String, dynamic>> fetchQuizById_fromActived_quizzes(String activequizId) async {
-  try {
-    DocumentSnapshot activeQuizSnapshot =
-        await _db.collection("actived_Quizzes").doc(activequizId).get();
-
-    if (activeQuizSnapshot.exists) {
-      Map<String, dynamic> activeQuiz = activeQuizSnapshot.data() as Map<String, dynamic>;
-      String quizId = activeQuiz["quizzId"];
-
-      return await fetchQuizById(quizId);
-    } else {
-      print("Active quiz not found.");
-      return {}; // Return an empty map if the document doesn't exist
+    Future<void> changeGameStatus(String gameStatus, String activeQuizId) async {
+      await _db.collection("actived_Quizzes").doc(activeQuizId).update({"status": gameStatus});
     }
+    Future<void> changeGameStatusandcurrentquestion(String gameStatus, String activeQuizId,int nextquestion) async {
+      await _db.collection("actived_Quizzes").doc(activeQuizId).update(
+        { "num_actual_question": nextquestion,
+          "status": gameStatus}
+        );
+    }
+
+    Future<Map<String, dynamic>> fetchQuestionByIdFromActiveQuizzes(
+      String activequizId,
+      int currentQuestionNumber,
+    ) async {
+      try {
+        final activeQuizSnapshot = await _db
+            .collection("actived_Quizzes")
+            .doc(activequizId)
+            .get();
+
+        if (!activeQuizSnapshot.exists) {
+          throw Exception('Active quiz not found');
+        }
+
+        final activeQuiz = activeQuizSnapshot.data() as Map<String, dynamic>;
+        final quizId = activeQuiz['quizzId'] ?? activeQuiz['quizId'];
+        
+        if (quizId == null || quizId.isEmpty) {
+          throw Exception('Invalid quiz ID in active quiz');
+        }
+
+        final quizData = await fetchQuizById(quizId);
+        final questions = (quizData['questions'] as List<dynamic>?)
+            ?.cast<Map<String, dynamic>>() 
+            ?? <Map<String, dynamic>>[];
+
+        if (currentQuestionNumber < 0 || currentQuestionNumber >= questions.length) {
+          throw Exception('Question index out of bounds');
+        }
+
+        return questions[currentQuestionNumber]; // Remove the await here
+      } catch (e) {
+        return {};
+      }
+
+    }
+  
+  
+Future<void> setscoreparticipant(
+  List<int> selectedAnswers,
+  String participantId,
+  int timeuser,
+  String activeQuizId,
+  List<int> correctAnswers,
+) async {
+  try {
+    // 1. Reference to the participant document
+    final participantRef = FirebaseFirestore.instance
+        .collection('actived_Quizzes')
+        .doc(activeQuizId)
+        .collection('participants')
+        .doc(participantId);
+
+    print(selectedAnswers);
+    print(correctAnswers);
+    print(timeuser);
+
+    // 2. calculate points 
+    final points = 3;
+
+    // 4. Update participant data
+    await participantRef.update({
+      'score': FieldValue.increment(points),
+    });
+
   } catch (e) {
-    print("Error fetching active quiz: $e");
-    return {}; // Return an empty map in case of an error
+    throw Exception('Failed to update participant score');
   }
 }
 
-  
-  
-  
-  
-  
+Future<int> fetchNumberQuestions(
+      String activequizId,
+    ) async {
+      try {
+        final activeQuizSnapshot = await _db
+            .collection("actived_Quizzes")
+            .doc(activequizId)
+            .get();
+
+        if (!activeQuizSnapshot.exists) {
+          throw Exception('Active quiz not found');
+        }
+
+        final activeQuiz = activeQuizSnapshot.data() as Map<String, dynamic>;
+        final quizId = activeQuiz['quizzId'] ?? activeQuiz['quizId'];
+        
+        if (quizId == null || quizId.isEmpty) {
+          throw Exception('Invalid quiz ID in active quiz');
+        }
+
+        final quizData = await fetchQuizById(quizId);
+        final questions = (quizData['questions'] as List<dynamic>?)
+            ?.cast<Map<String, dynamic>>() 
+            ?? <Map<String, dynamic>>[];
+        return questions.length; // Remove the await here
+      } catch (e) {
+        return 0;
+      }
+
+    }
+
+
   
   
   
