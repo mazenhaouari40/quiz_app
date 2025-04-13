@@ -1,28 +1,30 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:quiz_app/services/utils.dart';
 
 //enum quizState { waiting, count_down, started, leader_board, finished }
 
 class QuizService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-    Future<bool> joinQuiz( String code) async {
+  Future<bool> joinQuiz(String code) async {
+    final quizQuery =
+        await _db
+            .collection('actived_Quizzes')
+            .where('invitation_code', isEqualTo: code)
+            .limit(1)
+            .get();
 
-      final quizQuery = await _db
-          .collection('actived_Quizzes')
-          .where('invitation_code', isEqualTo: code)
-          .limit(1)
-          .get();
-
-      if (quizQuery.docs.isEmpty) 
-          { return false;}
+    if (quizQuery.docs.isEmpty) {
+      return false;
+    }
 
     return true;
-  
   }
 
-    Future<String?> activateQuiz(
+  Future<String?> activateQuiz(
     String invitationCode,
     String quizId,
     String userId,
@@ -43,13 +45,13 @@ class QuizService {
 
       // Create the main document
       await activeQuizRef.set(activeQuizData);
-      
 
       return activeQuizId;
     } catch (e) {
       return null;
     }
   }
+
   // Save a new quiz to Firestore
   Future<bool> saveNewQuiz(Map<String, dynamic> quiz) async {
     try {
@@ -149,7 +151,6 @@ class QuizService {
           'id': doc.id,
           'name': doc['quizName'] as String,
           'createdBy': doc['createdBy'] as String,
-
         };
       }).toList();
     } catch (e) {
@@ -168,119 +169,121 @@ class QuizService {
     }
   }
 
-    Future<void> changeGameStatus(String gameStatus, String activeQuizId) async {
-      await _db.collection("actived_Quizzes").doc(activeQuizId).update({"status": gameStatus});
-    }
-    Future<void> changeGameStatusandcurrentquestion(String gameStatus, String activeQuizId,int nextquestion) async {
-      await _db.collection("actived_Quizzes").doc(activeQuizId).update(
-        { "num_actual_question": nextquestion,
-          "status": gameStatus}
-        );
-    }
+  Future<void> changeGameStatus(String gameStatus, String activeQuizId) async {
+    await _db.collection("actived_Quizzes").doc(activeQuizId).update({
+      "status": gameStatus,
+    });
+  }
 
-    Future<Map<String, dynamic>> fetchQuestionByIdFromActiveQuizzes(
-      String activequizId,
-      int currentQuestionNumber,
-    ) async {
-      try {
-        final activeQuizSnapshot = await _db
-            .collection("actived_Quizzes")
-            .doc(activequizId)
-            .get();
+  Future<void> changeGameStatusandcurrentquestion(
+    String gameStatus,
+    String activeQuizId,
+    int nextquestion,
+  ) async {
+    await _db.collection("actived_Quizzes").doc(activeQuizId).update({
+      "num_actual_question": nextquestion,
+      "status": gameStatus,
+    });
+  }
 
-        if (!activeQuizSnapshot.exists) {
-          throw Exception('Active quiz not found');
-        }
+  Future<Map<String, dynamic>> fetchQuestionByIdFromActiveQuizzes(
+    String activequizId,
+    int currentQuestionNumber,
+  ) async {
+    try {
+      final activeQuizSnapshot =
+          await _db.collection("actived_Quizzes").doc(activequizId).get();
 
-        final activeQuiz = activeQuizSnapshot.data() as Map<String, dynamic>;
-        final quizId = activeQuiz['quizzId'] ?? activeQuiz['quizId'];
-        
-        if (quizId == null || quizId.isEmpty) {
-          throw Exception('Invalid quiz ID in active quiz');
-        }
-
-        final quizData = await fetchQuizById(quizId);
-        final questions = (quizData['questions'] as List<dynamic>?)
-            ?.cast<Map<String, dynamic>>() 
-            ?? <Map<String, dynamic>>[];
-
-        if (currentQuestionNumber < 0 || currentQuestionNumber >= questions.length) {
-          throw Exception('Question index out of bounds');
-        }
-
-        return questions[currentQuestionNumber]; // Remove the await here
-      } catch (e) {
-        return {};
+      if (!activeQuizSnapshot.exists) {
+        throw Exception('Active quiz not found');
       }
 
+      final activeQuiz = activeQuizSnapshot.data() as Map<String, dynamic>;
+      final quizId = activeQuiz['quizzId'] ?? activeQuiz['quizId'];
+
+      if (quizId == null || quizId.isEmpty) {
+        throw Exception('Invalid quiz ID in active quiz');
+      }
+
+      final quizData = await fetchQuizById(quizId);
+      final questions =
+          (quizData['questions'] as List<dynamic>?)
+              ?.cast<Map<String, dynamic>>() ??
+          <Map<String, dynamic>>[];
+
+      if (currentQuestionNumber < 0 ||
+          currentQuestionNumber >= questions.length) {
+        throw Exception('Question index out of bounds');
+      }
+
+      return questions[currentQuestionNumber]; // Remove the await here
+    } catch (e) {
+      return {};
     }
-  
-  
-Future<void> setscoreparticipant(
-  List<int> selectedAnswers,
-  String participantId,
-  int timeuser,
-  String activeQuizId,
-  List<int> correctAnswers,
-) async {
-  try {
-    // 1. Reference to the participant document
-    final participantRef = FirebaseFirestore.instance
-        .collection('actived_Quizzes')
-        .doc(activeQuizId)
-        .collection('participants')
-        .doc(participantId);
+  }
 
-    print(selectedAnswers);
-    print(correctAnswers);
-    print(timeuser);
-    //yazid function
-    // 2. calculate points 
-    final points = 3;
+  Future<void> setscoreparticipant(
+    List<int> selectedAnswers,
+    String participantId,
+    int timeuser,
+    String activeQuizId,
+    List<int> correctAnswers,
+  ) async {
+    try {
+      // 1. Reference to the participant document
+      final participantRef = FirebaseFirestore.instance
+          .collection('actived_Quizzes')
+          .doc(activeQuizId)
+          .collection('participants')
+          .doc(participantId);
 
-    // 4. Update participant data
-    await participantRef.update({
-      'score': FieldValue.increment(points),
-    });
+      if (kDebugMode) {
+        print(selectedAnswers);
+        print(correctAnswers);
+        print(timeuser);
+      }
 
-  } catch (e) {
-    throw Exception('Failed to update participant score');
+      debugPrint('$correctAnswers');
+
+      //yazid function
+      // 2. calculate points
+      final points = calculateScore(
+        selectedAnswers,
+        correctAnswers,
+        timeuser as double,
+      );
+
+      // 4. Update participant data
+      await participantRef.update({'score': FieldValue.increment(points)});
+    } catch (e) {
+      throw Exception('Failed to update participant score');
+    }
+  }
+
+  Future<int> fetchNumberQuestions(String activequizId) async {
+    try {
+      final activeQuizSnapshot =
+          await _db.collection("actived_Quizzes").doc(activequizId).get();
+
+      if (!activeQuizSnapshot.exists) {
+        throw Exception('Active quiz not found');
+      }
+
+      final activeQuiz = activeQuizSnapshot.data() as Map<String, dynamic>;
+      final quizId = activeQuiz['quizzId'] ?? activeQuiz['quizId'];
+
+      if (quizId == null || quizId.isEmpty) {
+        throw Exception('Invalid quiz ID in active quiz');
+      }
+
+      final quizData = await fetchQuizById(quizId);
+      final questions =
+          (quizData['questions'] as List<dynamic>?)
+              ?.cast<Map<String, dynamic>>() ??
+          <Map<String, dynamic>>[];
+      return questions.length; // Remove the await here
+    } catch (e) {
+      return 0;
+    }
   }
 }
-
-Future<int> fetchNumberQuestions(
-      String activequizId,
-    ) async {
-      try {
-        final activeQuizSnapshot = await _db
-            .collection("actived_Quizzes")
-            .doc(activequizId)
-            .get();
-
-        if (!activeQuizSnapshot.exists) {
-          throw Exception('Active quiz not found');
-        }
-
-        final activeQuiz = activeQuizSnapshot.data() as Map<String, dynamic>;
-        final quizId = activeQuiz['quizzId'] ?? activeQuiz['quizId'];
-        
-        if (quizId == null || quizId.isEmpty) {
-          throw Exception('Invalid quiz ID in active quiz');
-        }
-
-        final quizData = await fetchQuizById(quizId);
-        final questions = (quizData['questions'] as List<dynamic>?)
-            ?.cast<Map<String, dynamic>>() 
-            ?? <Map<String, dynamic>>[];
-        return questions.length; // Remove the await here
-      } catch (e) {
-        return 0;
-      }
-
-    }
-
-
-  
-  
-  
-  }

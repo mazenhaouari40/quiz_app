@@ -50,8 +50,8 @@ class _WaitingPageState extends State<WaitingPage>
   StreamSubscription? _quizSubscription;
 
   List<Map<String, dynamic>> _participantData = [];
-  late Map<String, dynamic> currentQuestion ;
-  int? _numberquestion ;
+  late Map<String, dynamic> currentQuestion;
+  int? _numberquestion;
 
   GameStatus _parseGameStatus(String status) {
     switch (status) {
@@ -69,22 +69,23 @@ class _WaitingPageState extends State<WaitingPage>
         return GameStatus.waiting;
     }
   }
+
   String gameStatusToString(GameStatus status) {
-  switch (status) {
-    case GameStatus.waiting:
-      return 'waiting';
-    case GameStatus.countdown:
-      return 'countdown';
-    case GameStatus.started:
-      return 'started';
-    case GameStatus.leaderboard:
-      return 'leaderboard';
-    case GameStatus.finished:
-      return 'finished';
-    default:
-      return 'waiting';
+    switch (status) {
+      case GameStatus.waiting:
+        return 'waiting';
+      case GameStatus.countdown:
+        return 'countdown';
+      case GameStatus.started:
+        return 'started';
+      case GameStatus.leaderboard:
+        return 'leaderboard';
+      case GameStatus.finished:
+        return 'finished';
+      default:
+        return 'waiting';
+    }
   }
-}
 
   @override
   void initState() {
@@ -96,103 +97,103 @@ class _WaitingPageState extends State<WaitingPage>
     )..repeat(reverse: true);
     _fadeAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(_controller);
     _setupFirebaseListener();
-
   }
 
   Future<void> _loadQuestion() async {
-     currentQuestion = await _quizService.fetchQuestionByIdFromActiveQuizzes(
-        widget.activequizId,
-        _currentQuizNumber,
-      );
-      _numberquestion = await _quizService.fetchNumberQuestions(widget.activequizId);
-
+    currentQuestion = await _quizService.fetchQuestionByIdFromActiveQuizzes(
+      widget.activequizId,
+      _currentQuizNumber,
+    );
+    _numberquestion = await _quizService.fetchNumberQuestions(
+      widget.activequizId,
+    );
   }
 
-    @override
+  @override
   Widget build(BuildContext context) {
     switch (_gameStatus) {
       case GameStatus.waiting:
-              return _waiting_room();
+        return _waiting_room();
       case GameStatus.countdown:
-              return _count_down();
+        return _count_down();
       case GameStatus.started:
         return _question_screen();
       case GameStatus.leaderboard:
       case GameStatus.finished:
-          return _buildleaderboardScreen() ;
-
-    }  
+        return _buildleaderboardScreen();
     }
+  }
 
-      Widget _waiting_room() {
+  Widget _waiting_room() {
+    List<Map<String, dynamic>> participants = createParticipants(
+      _participantData,
+    );
 
-          List<Map<String, dynamic>> participants = createParticipants(
-            _participantData,
-          );
-
-        return Scaffold(
-          backgroundColor: Color(0xFF1A1A2E), // Deep navy blue background
-          appBar: AppBar(
-            backgroundColor: Color(0xFF0E0E0E), // Black AppBar
-            automaticallyImplyLeading: false, // Removes the back button
-            title: null, // Removes default title
-            flexibleSpace: Center(
-              child: Text(
-                'Quiz Code: ${widget.invitation_code}',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 1.5,
-                ),
-              ),
+    return Scaffold(
+      backgroundColor: Color(0xFF1A1A2E), // Deep navy blue background
+      appBar: AppBar(
+        backgroundColor: Color(0xFF0E0E0E), // Black AppBar
+        automaticallyImplyLeading: false, // Removes the back button
+        title: null, // Removes default title
+        flexibleSpace: Center(
+          child: Text(
+            'Quiz Code: ${widget.invitation_code}',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: 1.5,
             ),
           ),
-          body: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Center(
-              child: Container(
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1), // Semi-transparent box
-                  borderRadius: BorderRadius.circular(20), // Rounded corners
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Center(
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1), // Semi-transparent box
+              borderRadius: BorderRadius.circular(20), // Rounded corners
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: 2,
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min, // Fit content height
-                  children: [
-                    // Animated "Waiting for players..."
-                    FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Text(
-                        "Waiting for players to join...",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Fit content height
+              children: [
+                // Animated "Waiting for players..."
+                FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Text(
+                    "Waiting for players to join...",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
-                    SizedBox(height: 20),
-                    Visibility(
-                      visible: _isHost,
-                      child: ElevatedButton(
-                        onPressed: () async {
-
-                          QuizService().changeGameStatus("countdown", widget.activequizId);
-                          /*Navigator.push(
+                  ),
+                ),
+                SizedBox(height: 20),
+                Visibility(
+                  visible: _isHost,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      QuizService().changeGameStatus(
+                        "countdown",
+                        widget.activequizId,
+                      );
+                      /*Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => _count_down()),
                           );*/
-                          // Convert participants list to map
-                          // Uncommment and Modify this
-                          /*Map<String, dynamic> participantsMap = {};
+                      // Convert participants list to map
+                      // Uncommment and Modify this
+                      /*Map<String, dynamic> participantsMap = {};
                         for (var participant in participants) {
                           participantsMap[participant['id']] = {
                             'display_name': participant['display_name'],
@@ -210,104 +211,103 @@ class _WaitingPageState extends State<WaitingPage>
                         if (success) {
         Navigator.push(context, MaterialPageRoute(builder: (context) => NextScreen()));
       }*/
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF36F44C), // Green button
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              30,
-                            ), // Rounded button
-                          ),
-                        ),
-                        child: Text(
-                          "Start Quiz",
-                          style: TextStyle(color: Colors.white),
-                        ),
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF36F44C), // Green button
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          30,
+                        ), // Rounded button
                       ),
                     ),
-                    SizedBox(height: 30),
-                    // Participants Grid
-                    Text(
-                      "Participants (${participants.length})",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Text(
+                      "Start Quiz",
+                      style: TextStyle(color: Colors.white),
                     ),
-                    SizedBox(height: 10),
-                    Expanded(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          // Calculate the crossAxisCount based on available width
-                          final crossAxisCount = constraints.maxWidth > 800 ? 6 : 2;
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            physics:
-                                participants.length > crossAxisCount * 2
-                                    ? AlwaysScrollableScrollPhysics()
-                                    : NeverScrollableScrollPhysics(),
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: crossAxisCount,
-                              childAspectRatio: 3.5, // Adjusted for tighter boxes
-                              mainAxisSpacing: 8, // Reduced spacing
-                              crossAxisSpacing: 8, // Reduced spacing
+                  ),
+                ),
+                SizedBox(height: 30),
+                // Participants Grid
+                Text(
+                  "Participants (${participants.length})",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 10),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Calculate the crossAxisCount based on available width
+                      final crossAxisCount = constraints.maxWidth > 800 ? 6 : 2;
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics:
+                            participants.length > crossAxisCount * 2
+                                ? AlwaysScrollableScrollPhysics()
+                                : NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          childAspectRatio: 3.5, // Adjusted for tighter boxes
+                          mainAxisSpacing: 8, // Reduced spacing
+                          crossAxisSpacing: 8, // Reduced spacing
+                        ),
+                        itemCount: participants.length,
+                        itemBuilder: (context, index) {
+                          final participant = participants[index];
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8, // Reduced horizontal padding
+                              vertical: 4, // Reduced vertical padding
                             ),
-                            itemCount: participants.length,
-                            itemBuilder: (context, index) {
-                              final participant = participants[index];
-                              return Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 8, // Reduced horizontal padding
-                                  vertical: 4, // Reduced vertical padding
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.1),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min, // Tight layout
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.person_outline,
+                                  color: Colors.white70,
+                                  size: 16, // Smaller icon
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.1),
+                                SizedBox(width: 6), // Reduced spacing
+                                Flexible(
+                                  child: Text(
+                                    participant['display_name'],
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14, // Slightly smaller font
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min, // Tight layout
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.person_outline,
-                                      color: Colors.white70,
-                                      size: 16, // Smaller icon
-                                    ),
-                                    SizedBox(width: 6), // Reduced spacing
-                                    Flexible(
-                                      child: Text(
-                                        participant['display_name'],
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14, // Slightly smaller font
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
+                              ],
+                            ),
                           );
                         },
-                      ),
-                    ),
-                  ],
+                      );
+                    },
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
-        );
-      }
-
+        ),
+      ),
+    );
+  }
 
   Future<void> _removeUser(String participantId) async {
     try {
@@ -353,7 +353,7 @@ class _WaitingPageState extends State<WaitingPage>
         .doc(widget.activequizId);
 
     _quizSubscription = activeQuizRef.snapshots().listen((docSnapshot) {
-          if (!mounted) return; // Check if widget is still in tree
+      if (!mounted) return; // Check if widget is still in tree
 
       if (docSnapshot.exists) {
         final data = docSnapshot.data()!;
@@ -362,8 +362,7 @@ class _WaitingPageState extends State<WaitingPage>
           _gameStatus = _parseGameStatus(data['status']);
           _currentQuizNumber = data['num_actual_question'] ?? -1;
         });
-            _loadQuestion();
-
+        _loadQuestion();
       }
     });
 
@@ -386,14 +385,12 @@ class _WaitingPageState extends State<WaitingPage>
             }
           }
         });
-
-
   }
- 
-//question
+
+  //question
   Widget _question_screen() {
     /* replace the question with the backend */
-   /* final Map<String, dynamic> questionData = {
+    /* final Map<String, dynamic> questionData = {
       "mappage": 0,
       "correctAnswers": [0, 1],
       "options": [
@@ -408,18 +405,23 @@ class _WaitingPageState extends State<WaitingPage>
 
     final Map<String, dynamic> questionData = {
       "mappage": _currentQuizNumber, // Use default if null
-  "correctAnswers": List<int>.from(currentQuestion['correctAnswers'] ?? []),
-  "options": List<String>.from(currentQuestion['options'] ?? []),
-  "question": currentQuestion['question'] ?? currentQuestion['text'] ?? 'No question available',
-  "tempsquestion": currentQuestion['tempsquestion'] ?? currentQuestion['duration'] ?? 10000,
+      "correctAnswers": List<int>.from(currentQuestion['correctAnswers'] ?? []),
+      "options": List<String>.from(currentQuestion['options'] ?? []),
+      "question":
+          currentQuestion['question'] ??
+          currentQuestion['text'] ??
+          'No question available',
+      "tempsquestion":
+          currentQuestion['tempsquestion'] ??
+          currentQuestion['duration'] ??
+          10000,
     };
-
 
     List<int> selectedAnswers = [];
     int timeLeft = questionData["tempsquestion"] ~/ 1000;
     int timeuser = timeLeft;
     List<int> correctAnswers =
-            (questionData["correctAnswers"] as List).cast<int>();
+        (questionData["correctAnswers"] as List).cast<int>();
     Timer? timer;
 
     return StatefulBuilder(
@@ -431,11 +433,19 @@ class _WaitingPageState extends State<WaitingPage>
               setState(() => timeLeft--);
             } else {
               timer.cancel();
-              if (!_isHost){
-                  _quizService.setscoreparticipant(selectedAnswers, widget.userId, timeuser, widget.activequizId, correctAnswers)  ;
-                }
-                          QuizService().changeGameStatus("leaderboard", widget.activequizId);
-
+              if (!_isHost) {
+                _quizService.setscoreparticipant(
+                  selectedAnswers,
+                  widget.userId,
+                  timeuser,
+                  widget.activequizId,
+                  correctAnswers,
+                );
+              }
+              QuizService().changeGameStatus(
+                "leaderboard",
+                widget.activequizId,
+              );
             }
           });
         }
@@ -473,11 +483,11 @@ class _WaitingPageState extends State<WaitingPage>
                       } else {
                         selectedAnswers.add(index);
                       }
-                       timeuser = timeLeft;
+                      timeuser = timeLeft;
                     });
                   }, setState),
                 ),
-               // _buildSubmitButton(selectedAnswers,correctAnswers),
+                // _buildSubmitButton(selectedAnswers,correctAnswers),
               ],
             ),
           ),
@@ -559,9 +569,7 @@ class _WaitingPageState extends State<WaitingPage>
     );
   }
 
-
-
- /* Widget _buildSubmitButton(List<int> selectedAnswers,List<int> correctAnswers) {
+  /* Widget _buildSubmitButton(List<int> selectedAnswers,List<int> correctAnswers) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
@@ -591,9 +599,7 @@ class _WaitingPageState extends State<WaitingPage>
     {'displayName': 'David', 'score': 70, 'userid': '004'},
   ];*/
 
-
-
- /* List<Map<String, dynamic>> createParticipants(
+  /* List<Map<String, dynamic>> createParticipants(
     List<Map<String, dynamic>> participantData,
   ) {
     return participantData.map((data) {
@@ -607,7 +613,7 @@ class _WaitingPageState extends State<WaitingPage>
 
   Widget _buildleaderboardScreen() {
     /*Replace this with the backend */
-   // final participants = createParticipants(participantsData);
+    // final participants = createParticipants(participantsData);
     return LeaderboardScreen(
       _participantData,
       _isHost,
@@ -615,16 +621,20 @@ class _WaitingPageState extends State<WaitingPage>
       onNextQuestion: () {
         // Handle next question navigation
         /* Replace this with the backend */
-    if ((_currentQuizNumber + 1) < _numberquestion!) {
-                              QuizService().changeGameStatusandcurrentquestion("countdown", widget.activequizId,_currentQuizNumber + 1);
-    }else{
-                              QuizService().changeGameStatus("finished", widget.activequizId);
+        if ((_currentQuizNumber + 1) < _numberquestion!) {
+          QuizService().changeGameStatusandcurrentquestion(
+            "countdown",
+            widget.activequizId,
+            _currentQuizNumber + 1,
+          );
+        } else {
+          QuizService().changeGameStatus("finished", widget.activequizId);
 
-              /*Navigator.push(
+          /*Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => _count_down()),
               );*/
-    }
+        }
       },
     );
   }
@@ -633,25 +643,19 @@ class _WaitingPageState extends State<WaitingPage>
     return CountdownScreen(
       onCountdownComplete: () {
         // This callback runs when countdown finishes
-      /*  Navigator.pushReplacement(
+        /*  Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => _question_screen()),
         );*/
-                                  QuizService().changeGameStatus("started", widget.activequizId);
-
-
+        QuizService().changeGameStatus("started", widget.activequizId);
       },
     );
   }
 
-
-   @override
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
     _removeUser(widget.userId);
   }
 }
-
-
-

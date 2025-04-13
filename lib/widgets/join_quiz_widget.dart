@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:quiz_app/waiting_room_page.dart';
+import 'package:quiz_app/quiz_flow.dart';
 import 'package:quiz_app/SetNameScreen.dart';
 /*
 class JoinQuizWidget extends StatelessWidget {
@@ -87,7 +87,6 @@ class JoinQuizWidget extends StatelessWidget {
   }
 }*/
 
-
 class JoinQuizWidget extends StatelessWidget {
   final TextEditingController _codeController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -97,14 +96,15 @@ class JoinQuizWidget extends StatelessWidget {
   Future<void> _joinQuiz(BuildContext context, String code) async {
     try {
       // Validate quiz exists
-      final quizQuery = await _firestore
-          .collection('actived_Quizzes')
-          .where('invitation_code', isEqualTo: code)
-          .limit(1)
-          .get();
+      final quizQuery =
+          await _firestore
+              .collection('actived_Quizzes')
+              .where('invitation_code', isEqualTo: code)
+              .limit(1)
+              .get();
 
       if (quizQuery.docs.isEmpty) throw Exception('Invalid quiz code');
-      
+
       final activatequizId = quizQuery.docs.first.id;
       final activeId = quizQuery.docs.first.data()['id'];
 
@@ -112,18 +112,18 @@ class JoinQuizWidget extends StatelessWidget {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => SetNameScreen(
-            quizCode: code,
-            activatequizId: activatequizId,
-           // activeId: activeId,
-          ),
+          builder:
+              (context) => SetNameScreen(
+                quizCode: code,
+                activatequizId: activatequizId,
+                // activeId: activeId,
+              ),
         ),
       );
-
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error joining: ${e.toString()}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error joining: ${e.toString()}')));
     }
   }
 
