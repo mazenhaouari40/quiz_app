@@ -244,17 +244,19 @@ class QuizService {
       }
 
       debugPrint('$correctAnswers');
-
+      int points =0;
       //yazid function
       // 2. calculate points
-      final points = calculateScore(
+      points = calculateScore(
         selectedAnswers,
         correctAnswers,
         timeuser as double,
       );
-
+     // final points = 3;
+      
       // 4. Update participant data
       await participantRef.update({'score': FieldValue.increment(points)});
+
     } catch (e) {
       throw Exception('Failed to update participant score');
     }
