@@ -575,12 +575,14 @@ Future<void> _initializeData() async {
   Widget _count_down() {
     return CountdownScreen(
       onCountdownComplete: () {
-        // This callback runs when countdown finishes
         /*  Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => _question_screen()),
         );*/
+        
+        if (_isHost) {
         QuizService().changeGameStatus("started", widget.activequizId);
+      }
       },
     );
   }
