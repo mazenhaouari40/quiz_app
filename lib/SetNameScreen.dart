@@ -90,6 +90,13 @@ class _SetNameScreenState extends State<SetNameScreen> {
 
         await participantRef.update({'userid': participantRef.id});
 
+    final querySnapshot = await _firestore
+        .collection('actived_Quizzes')
+        .where('id', isEqualTo: widget.activatequizId)
+        .limit(1)
+        .get();
+    final quizid = querySnapshot.docs.first['quizzId'];
+
         // Navigate to WaitingPage with the entered name
         Navigator.pushReplacement(
           context,
@@ -99,6 +106,7 @@ class _SetNameScreenState extends State<SetNameScreen> {
                   activequizId: widget.activatequizId,
                   userId: participantRef.id,
                   invitation_code: widget.quizCode,
+                  quizid: quizid ,
                 ),
           ),
         );

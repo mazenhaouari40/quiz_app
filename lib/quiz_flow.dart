@@ -27,12 +27,13 @@ class WaitingPage extends StatefulWidget {
   final String activequizId;
   final String userId;
   final String invitation_code;
-
+  final String quizid;
   WaitingPage({
     Key? key,
     required this.activequizId,
     required this.userId,
     required this.invitation_code,
+    required this.quizid,
   }) : super(key: key);
 
   @override
@@ -43,12 +44,13 @@ class _WaitingPageState extends State<WaitingPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
+
   final QuizService _quizService = QuizService();
   int _currentQuizNumber = 0;
   GameStatus _gameStatus = GameStatus.waiting;
   bool _isHost = false;
   StreamSubscription? _quizSubscription;
-
+ Map<String, dynamic>? _quiz;
   List<Map<String, dynamic>> _participantData = [];
   late Map<String, dynamic> currentQuestion;
   int? _numberquestion;
@@ -87,27 +89,120 @@ class _WaitingPageState extends State<WaitingPage>
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadQuestion();
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 2),
-    )..repeat(reverse: true);
-    _fadeAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(_controller);
-    _setupFirebaseListener();
+Future<void> _loadQuiz(String quizId) async {
+  try {
+    _quiz = await _quizService.fetchQuizById(quizId);
+  } catch (e) {
+    print("Error loading quiz: $e");
   }
+}
 
   Future<void> _loadQuestion() async {
-    currentQuestion = await _quizService.fetchQuestionByIdFromActiveQuizzes(
+    /*currentQuestion = await _quizService.fetchQuestionByIdFromActiveQuizzes(
       widget.activequizId,
       _currentQuizNumber,
     );
     _numberquestion = await _quizService.fetchNumberQuestions(
       widget.activequizId,
-    );
+    );*/
+    currentQuestion = _quiz?['questions'][_currentQuizNumber];  
+    _numberquestion = _quiz?['questions'].length;
+
   }
+
+Future<void> _initializeData() async {
+  await _loadQuiz(widget.quizid);
+  //_loadQuestion(); // Safe to call after quiz is loaded
+}
+
+  @override
+  void initState() {
+    super.initState();
+      _initializeData();  
+      _controller = AnimationController(
+        vsync: this,
+        duration: Duration(seconds: 2),
+      )..repeat(reverse: true);
+      _fadeAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(_controller);
+    _initializeData().then((_) {
+      _setupFirebaseListener(); 
+  });
+  }
+
+
+  Future<void> _removeUser(String participantId) async {
+    try {
+      if (participantId.isEmpty) {
+        throw Exception('Participant ID cannot be empty');
+      }
+
+      await FirebaseFirestore.instance
+          .collection('actived_Quizzes') // Correct collection name
+          .doc(widget.activequizId) // Using widget's quiz ID
+          .collection('participants')
+          .doc(participantId) // Directly use the passed document ID
+          .delete();
+
+      debugPrint('Successfully removed participant: $participantId');
+    } catch (e) {
+      debugPrint('Error removing participant: $e');
+      rethrow; // Re-throw to let calling code handle the error
+    }
+  }
+
+  Future<void> _fetchParticipants() async {
+    try {
+      final query =
+          await FirebaseFirestore.instance
+              .collection('actived_Quizzes')
+              .doc(widget.activequizId)
+              .collection('participants')
+              .get();
+
+      _participantData = query.docs.map((doc) => doc.data()).toList();
+    } catch (e) {
+      print('Error fetching participants: $e');
+    }
+  }
+
+  void _setupFirebaseListener() {
+    //quiz listenner
+    final activeQuizRef = FirebaseFirestore.instance
+        .collection('actived_Quizzes')
+        .doc(widget.activequizId);
+
+    _quizSubscription = activeQuizRef.snapshots().listen((docSnapshot) {
+      if (!mounted) return; 
+
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data()!;
+        setState(() {
+          _isHost = data['createdBy'] == widget.userId;
+          _gameStatus = _parseGameStatus(data['status']);
+          _currentQuizNumber = data['num_actual_question'] ?? -1;
+          _loadQuestion();
+        });
+      }
+    });
+    //participant listenner
+    FirebaseFirestore.instance
+        .collection('actived_Quizzes')
+        .doc(widget.activequizId)
+        .collection('participants')
+        .snapshots()
+        .listen((querySnapshot) {
+          if (querySnapshot.docs.isNotEmpty) {
+            _participantData =
+                querySnapshot.docs.map((doc) => doc.data()).toList();
+            if (mounted) {
+              setState(() {
+                _fetchParticipants();
+              }); 
+            }
+          }
+        });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -125,19 +220,17 @@ class _WaitingPageState extends State<WaitingPage>
   }
 
   Widget _waiting_room() {
-    List<Map<String, dynamic>> participants = createParticipants(
-      _participantData,
-    );
+    List<Map<String, dynamic>> participants = createParticipants(_participantData,);
 
     return Scaffold(
-      backgroundColor: Color(0xFF1A1A2E), // Deep navy blue background
+      backgroundColor: Color(0xFF1A1A2E), 
       appBar: AppBar(
-        backgroundColor: Color(0xFF0E0E0E), // Black AppBar
-        automaticallyImplyLeading: false, // Removes the back button
-        title: null, // Removes default title
+        backgroundColor: Color(0xFF0E0E0E), 
+        automaticallyImplyLeading: false, 
+        title: null, 
         flexibleSpace: Center(
           child: Text(
-            'Quiz Code: ${widget.invitation_code}',
+          'Quiz Code: ${widget.invitation_code.substring(0, 3)} ${widget.invitation_code.substring(3)}',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -187,30 +280,6 @@ class _WaitingPageState extends State<WaitingPage>
                         "countdown",
                         widget.activequizId,
                       );
-                      /*Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => _count_down()),
-                          );*/
-                      // Convert participants list to map
-                      // Uncommment and Modify this
-                      /*Map<String, dynamic> participantsMap = {};
-                        for (var participant in participants) {
-                          participantsMap[participant['id']] = {
-                            'display_name': participant['display_name'],
-                            'score': participant['score'],
-                          };
-                        }
-
-                        bool success = await _quizService.activateQuiz(
-                          widget.invitation_code,
-                          widget.quizId,
-                          widget.userId,
-                          participantsMap,
-                        );
-
-                        if (success) {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => NextScreen()));
-      }*/
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF36F44C), // Green button
@@ -308,113 +377,24 @@ class _WaitingPageState extends State<WaitingPage>
       ),
     );
   }
+//test
 
-  Future<void> _removeUser(String participantId) async {
-    try {
-      if (participantId.isEmpty) {
-        throw Exception('Participant ID cannot be empty');
-      }
-
-      await FirebaseFirestore.instance
-          .collection('actived_Quizzes') // Correct collection name
-          .doc(widget.activequizId) // Using widget's quiz ID
-          .collection('participants')
-          .doc(participantId) // Directly use the passed document ID
-          .delete();
-
-      debugPrint('Successfully removed participant: $participantId');
-    } catch (e) {
-      debugPrint('Error removing participant: $e');
-      rethrow; // Re-throw to let calling code handle the error
-    }
-  }
-
-  Future<void> _fetchParticipants() async {
-    try {
-      final query =
-          await FirebaseFirestore.instance
-              .collection('actived_Quizzes')
-              .doc(widget.activequizId)
-              .collection('participants')
-              .get();
-
-      _participantData = query.docs.map((doc) => doc.data()).toList();
-
-      // Jouer les sons si nécessaire
-    } catch (e) {
-      print('Error fetching participants: $e');
-    }
-  }
-
-  void _setupFirebaseListener() {
-    //quiz listenner
-    final activeQuizRef = FirebaseFirestore.instance
-        .collection('actived_Quizzes')
-        .doc(widget.activequizId);
-
-    _quizSubscription = activeQuizRef.snapshots().listen((docSnapshot) {
-      if (!mounted) return; // Check if widget is still in tree
-
-      if (docSnapshot.exists) {
-        final data = docSnapshot.data()!;
-        setState(() {
-          _isHost = data['createdBy'] == widget.userId;
-          _gameStatus = _parseGameStatus(data['status']);
-          _currentQuizNumber = data['num_actual_question'] ?? -1;
-        });
-        _loadQuestion();
-      }
-    });
-
-    //participant listenner
-    FirebaseFirestore.instance
-        .collection('actived_Quizzes')
-        .doc(widget.activequizId)
-        .collection('participants')
-        .snapshots()
-        .listen((querySnapshot) {
-          if (querySnapshot.docs.isNotEmpty) {
-            _participantData =
-                querySnapshot.docs.map((doc) => doc.data()).toList();
-
-            // If new participant detected, navigate to all users screen
-            if (mounted) {
-              setState(() {
-                _fetchParticipants();
-              }); // Update UI with new participants
-            }
-          }
-        });
-  }
 
   //question
   Widget _question_screen() {
-    /* replace the question with the backend */
-    /* final Map<String, dynamic> questionData = {
-      "mappage": 0,
-      "correctAnswers": [0, 1],
-      "options": [
-        "Neural Language Processing",
-        "Natural Language Processing",
-        "Non-Linear Processing",
-        "Neural Learning Preparing",
-      ],
-      "question": "What does NLP stand for?",
-      "tempsquestion": 10000,
-    };*/
 
     final Map<String, dynamic> questionData = {
       "mappage": _currentQuizNumber, // Use default if null
-      "correctAnswers": List<int>.from(currentQuestion['correctAnswers'] ?? []),
-      "options": List<String>.from(currentQuestion['options'] ?? []),
+      "correctAnswers": List<int>.from(currentQuestion['correctAnswers'] ),
+      "options": List<String>.from(currentQuestion['options']),
       "question":
-          currentQuestion['question'] ??
-          currentQuestion['text'] ??
-          'No question available',
+          currentQuestion['question'] ,
+         // currentQuestion['text'] ??
+          //'No question available',
       "tempsquestion":
-          currentQuestion['tempsquestion'] ??
-          currentQuestion['duration'] ??
-          10000,
+          currentQuestion['tempsquestion'] 
+       //   currentQuestion['duration'] ??
+        //  10000,
     };
 
     List<int> selectedAnswers = [];
@@ -487,7 +467,6 @@ class _WaitingPageState extends State<WaitingPage>
                     });
                   }, setState),
                 ),
-                // _buildSubmitButton(selectedAnswers,correctAnswers),
               ],
             ),
           ),
@@ -569,58 +548,16 @@ class _WaitingPageState extends State<WaitingPage>
     );
   }
 
-  /* Widget _buildSubmitButton(List<int> selectedAnswers,List<int> correctAnswers) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () {
-          /* replace this with the score for the participant */
-
-          print("Selected Answers: $selectedAnswers");
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF36F44C),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        child: const Text(
-          "Submit Answer",
-          style: TextStyle(fontSize: 18, color: Colors.white),
-        ),
-      ),
-    );
-  }*/
-
-  /* Replace participant with the BE */
-  /*List<Map<String, dynamic>> participantsData = [
-    {'displayName': 'Alice', 'score': 90, 'userid': '001'},
-    {'displayName': 'Bob', 'score': 80, 'userid': '002'},
-    {'displayName': 'Charlie', 'score': 85, 'userid': '003'},
-    {'displayName': 'David', 'score': 70, 'userid': '004'},
-  ];*/
-
-  /* List<Map<String, dynamic>> createParticipants(
-    List<Map<String, dynamic>> participantData,
-  ) {
-    return participantData.map((data) {
-      return {
-        'display_name': data['displayName'],
-        'score': data['score'] ?? 0,
-        'id': data['userid'],
-      };
-    }).toList();
-  }*/
-
   Widget _buildleaderboardScreen() {
-    /*Replace this with the backend */
-    // final participants = createParticipants(participantsData);
+    //sort participant
+
+    _participantData.sort((a, b) => b['score'].compareTo(a['score']));
     return LeaderboardScreen(
       _participantData,
       _isHost,
       gameStatusToString(_gameStatus),
+      widget.userId,
       onNextQuestion: () {
-        // Handle next question navigation
-        /* Replace this with the backend */
         if ((_currentQuizNumber + 1) < _numberquestion!) {
           QuizService().changeGameStatusandcurrentquestion(
             "countdown",
@@ -630,10 +567,6 @@ class _WaitingPageState extends State<WaitingPage>
         } else {
           QuizService().changeGameStatus("finished", widget.activequizId);
 
-          /*Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => _count_down()),
-              );*/
         }
       },
     );

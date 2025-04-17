@@ -297,6 +297,8 @@ List<int> tempsQuestion = [5000]; // Stocke le temps par question en millisecond
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(color: Colors.black),
                               ),
+
+/*
                               child: ListTile(
                                 title: Text(
                                   questions[index].isNotEmpty
@@ -316,8 +318,56 @@ List<int> tempsQuestion = [5000]; // Stocke le temps par question en millisecond
                                     selectedQuestion = index;
                                   });
                                 },
-                              ),
-                            );
+                              ),*/
+child: Stack(
+  children: [
+    Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      width: double.infinity,
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            selectedQuestion = index;
+          });
+        },
+        child: Text(
+          questions[index],
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis, // Shows "..." if too long
+          style: TextStyle(
+            color: selectedQuestion == index ? Colors.white : Colors.black,
+            fontSize: 16,
+          ),
+        ),
+      ),
+    ),
+    Positioned(
+      top: 4,
+      right: 4,
+      child: GestureDetector(
+        onTap: () {
+          if (questions.length !=1){
+          setState(() {
+            questions.removeAt(index);
+            options.removeAt(index);
+            correctAnswers.removeAt(index);
+            tempsQuestion.removeAt(index);
+
+            if (selectedQuestion >= questions.length) {
+              selectedQuestion = questions.length - 1;
+            }
+          });}
+        },
+        child: Icon(
+          Icons.close,
+          size: 18, // small icon
+          color: Colors.red,
+        ),
+      ),
+    ),
+  ],
+),
+    );
                           },
                         ),
                       ),

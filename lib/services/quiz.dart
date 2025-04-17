@@ -243,7 +243,7 @@ class QuizService {
         print(timeuser);
       }
 
-      debugPrint('$correctAnswers');
+      debugPrint('$correctAnswers'); 
       int points =0;
       //yazid function
       // 2. calculate points
