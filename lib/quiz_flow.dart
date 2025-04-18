@@ -422,10 +422,12 @@ Future<void> _initializeData() async {
                   correctAnswers,
                 );
               }
+              if(_isHost){
               QuizService().changeGameStatus(
                 "leaderboard",
                 widget.activequizId,
               );
+              }
             }
           });
         }
