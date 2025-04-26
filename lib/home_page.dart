@@ -222,15 +222,6 @@ class _HomePageState extends State<HomePage> {
                           right: 8,
                           top: 8,
                           child: GestureDetector(
-                            /*onTap: () async {
-                              await QuizService().deleteQuiz(quiz['id']!);
-
-                              setState(() {
-                                quizzes.removeWhere(
-                                  (q) => q['id'] == quiz['id'],
-                                );
-                              });
-                            },*/
                           onTap: () async {
                             final shouldDelete = await showDialog<bool>(
                               context: context,

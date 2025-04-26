@@ -222,24 +222,6 @@ class _QuizPageState extends State<QuizPage> {
                                 border: Border.all(color: Colors.black),
                               ),
 
-/*
-                              child: ListTile(
-                                title: Text(
-                                  questions[index],
-                                  style: TextStyle(
-                                    color:
-                                        selectedQuestion == index
-                                            ? Colors.white
-                                            : Colors.black,
-                                  ),
-                                ),
-                                onTap: () {
-                                  setState(() {
-                                    selectedQuestion = index;
-                                  });
-                                },
-                              ),*/
-
 child: Stack(
   children: [
     Container(
@@ -254,7 +236,7 @@ child: Stack(
         child: Text(
           questions[index],
           maxLines: 1,
-          overflow: TextOverflow.ellipsis, // Shows "..." if too long
+          overflow: TextOverflow.ellipsis, 
           style: TextStyle(
             color: selectedQuestion == index ? Colors.white : Colors.black,
             fontSize: 16,
@@ -288,10 +270,6 @@ child: Stack(
     ),
   ],
 ),
-
-
-
-
                             );
                           },
                         ),
@@ -361,7 +339,6 @@ child: Stack(
                                   ),
                                 ),
 
-                                // Points Container - fixed width
                                 Container(
                                   width: 120, // Fixed width for points selector
                                   decoration: BoxDecoration(
@@ -376,7 +353,7 @@ child: Stack(
 
 
                                   child: DropdownButton<int>(
-                                    value: tempsQuestion[selectedQuestion], // Nouvelle variable "tempsQuestion"
+                                    value: tempsQuestion[selectedQuestion], 
                                     onChanged: (int? newValue) {
                                       if (newValue != null) {
                                         setState(() {
@@ -390,9 +367,7 @@ child: Stack(
                                         child: Text("${value ~/ 1000} sec"), // Convertir en secondes pour affichage
                                       );
                                     }).toList(),
-                                  ),
-
-                                  
+                                  ),                                  
                                 ),
                               ],
                             ),

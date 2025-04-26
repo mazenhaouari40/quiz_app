@@ -13,18 +13,13 @@ class JoinQuizWidget extends StatelessWidget {
 
   Future<void> _joinQuiz(BuildContext context, String code) async {
     try {
-    /*  final quizQuery =
-          await _firestore
-              .collection('actived_Quizzes')
-              .where('invitation_code', isEqualTo: code)
-              .limit(1)
-              .get();*/
-final quizQuery = await _firestore
-    .collection('actived_Quizzes')
-    .where('invitation_code', isEqualTo: code)
-    .where('status', isEqualTo: 'waiting')
-    .limit(1)
-    .get();
+
+      final quizQuery = await _firestore
+          .collection('actived_Quizzes')
+          .where('invitation_code', isEqualTo: code)
+          .where('status', isEqualTo: 'waiting')
+          .limit(1)
+          .get();
 
       if (quizQuery.docs.isEmpty) throw Exception('Invalid quiz code');
 

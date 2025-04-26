@@ -177,6 +177,7 @@ Future<void> _initializeData() async {
       if (docSnapshot.exists) {
         final data = docSnapshot.data()!;
         setState(() {
+          //ajout dans l'_initializeData
           _isHost = data['createdBy'] == widget.userId;
           _gameStatus = _parseGameStatus(data['status']);
           _currentQuizNumber = data['num_actual_question'] ?? -1;

@@ -185,8 +185,9 @@ class QuizService {
       "status": gameStatus,
     });
   }
-
-  Future<Map<String, dynamic>> fetchQuestionByIdFromActiveQuizzes(
+  
+//supprimer
+ /* Future<Map<String, dynamic>> fetchQuestionByIdFromActiveQuizzes(
     String activequizId,
     int currentQuestionNumber,
   ) async {
@@ -220,7 +221,7 @@ class QuizService {
     } catch (e) {
       return {};
     }
-  }
+  }*/
 
   Future<void> setscoreparticipant(
     List<int> selectedAnswers,
@@ -245,14 +246,12 @@ class QuizService {
 
       debugPrint('$correctAnswers'); 
       int points =0;
-      //yazid function
       // 2. calculate points
       points = calculateScore(
         selectedAnswers,
         correctAnswers,
         timeuser as double,
       );
-     // final points = 3;
       
       // 4. Update participant data
       await participantRef.update({'score': FieldValue.increment(points)});
@@ -262,7 +261,8 @@ class QuizService {
     }
   }
 
-  Future<int> fetchNumberQuestions(String activequizId) async {
+//supprimer
+  /*Future<int> fetchNumberQuestions(String activequizId) async {
     try {
       final activeQuizSnapshot =
           await _db.collection("actived_Quizzes").doc(activequizId).get();
@@ -287,5 +287,6 @@ class QuizService {
     } catch (e) {
       return 0;
     }
-  }
+  }*/
+  
 }
