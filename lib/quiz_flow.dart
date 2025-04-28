@@ -415,6 +415,7 @@ Future<void> _initializeData() async {
             } else {
               timer.cancel();
               if (!_isHost) {
+                print(timeuser);
                 _quizService.setscoreparticipant(
                   selectedAnswers,
                   widget.userId,

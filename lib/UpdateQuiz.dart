@@ -16,7 +16,9 @@ class _UpdateQuizState extends State<UpdateQuiz> {
   List<String> questions = [];
   List<List<String>> options = [];
   List<Set<int>> correctAnswers = [];
-List<int> tempsQuestion = [5000]; // Stocke le temps par question en millisecondes (par défaut 5s)
+  List<int> tempsQuestion = [
+    5000,
+  ]; // Stocke le temps par question en millisecondes (par défaut 5s)
   int selectedQuestion = 0;
   bool isLoading = true;
 
@@ -65,7 +67,8 @@ List<int> tempsQuestion = [5000]; // Stocke le temps par question en millisecond
         );
 
         tempsQuestion = List<int>.from(
-          quizData['questions']?.map((q) => q['tempsquestion'] as int? ?? 1) ?? [1],
+          quizData['questions']?.map((q) => q['tempsquestion'] as int? ?? 1) ??
+              [1],
         );
 
         isLoading = false;
@@ -173,7 +176,8 @@ List<int> tempsQuestion = [5000]; // Stocke le temps par question en millisecond
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text('Update Quiz')),
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: AppBar(title: Text('Update Quiz'), backgroundColor: Colors.white),
       body: Column(
         children: [
           Padding(
@@ -184,8 +188,7 @@ List<int> tempsQuestion = [5000]; // Stocke le temps par question en millisecond
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-
- Container(
+                    Container(
                       width:
                           constraints.maxWidth *
                           0.2, // Takes 60% of available width
@@ -220,9 +223,7 @@ List<int> tempsQuestion = [5000]; // Stocke le temps par question en millisecond
                       ),
                     ),
 
-
-
- Container(
+                    Container(
                       width:
                           constraints.maxWidth *
                           0.1, // Takes 30% of available width
@@ -246,8 +247,6 @@ List<int> tempsQuestion = [5000]; // Stocke le temps par question en millisecond
                         ),
                       ),
                     ),
-
-
                   ],
                 );
               },
@@ -451,12 +450,18 @@ child: Stack(
                                     },
                                     isExpanded: true,
                                     underline: Container(),
-                                    items: [5000, 10000, 15000, 20000].map((int value) { // Valeurs en ms
-                                      return DropdownMenuItem<int>(
-                                        value: value,
-                                        child: Text("${value ~/ 1000} sec"), // Convertir en secondes pour affichage
-                                      );
-                                    }).toList(),
+                                    items:
+                                        [5000, 10000, 15000, 20000].map((
+                                          int value,
+                                        ) {
+                                          // Valeurs en ms
+                                          return DropdownMenuItem<int>(
+                                            value: value,
+                                            child: Text(
+                                              "${value ~/ 1000} sec",
+                                            ), // Convertir en secondes pour affichage
+                                          );
+                                        }).toList(),
                                   ),
                                 ),
                               ],
@@ -538,7 +543,7 @@ child: Stack(
                                     ),
                                   ),
                                   child: Text(
-                                    "New Option",
+                                    "+ New Option",
                                     style: TextStyle(color: Colors.white),
                                   ),
                                 ),

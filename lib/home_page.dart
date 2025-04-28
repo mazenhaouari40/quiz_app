@@ -60,8 +60,8 @@ class _HomePageState extends State<HomePage> {
     try {
       // Generate necessary data
       // Generate necessary data with null checks
-      final quizId = quiz['id'] ;
-      final userId = quiz['createdBy'] ;
+      final quizId = quiz['id'];
+      final userId = quiz['createdBy'];
       final invitationCode = code_generator.generateCode();
 
       if (quizId == 'default_quiz_id' || userId == 'default_user_id') {
@@ -222,38 +222,48 @@ class _HomePageState extends State<HomePage> {
                           right: 8,
                           top: 8,
                           child: GestureDetector(
-                          onTap: () async {
-                            final shouldDelete = await showDialog<bool>(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: Text('Confirm Delete'),
-                                  content: Text('Are you sure you want to delete this quiz?'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.of(context).pop(false), // Cancel
-                                      child: Text('Cancel'),
+                            onTap: () async {
+                              final shouldDelete = await showDialog<bool>(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('Confirm Delete'),
+                                    content: Text(
+                                      'Are you sure you want to delete this quiz?',
                                     ),
-                                    TextButton(
-                                      onPressed: () => Navigator.of(context).pop(true), // Confirm
-                                      child: Text(
-                                        'Delete',
-                                        style: TextStyle(color: Colors.red),
+                                    actions: [
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.of(
+                                              context,
+                                            ).pop(false), // Cancel
+                                        child: Text('Cancel'),
                                       ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.of(
+                                              context,
+                                            ).pop(true), // Confirm
+                                        child: Text(
+                                          'Delete',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
 
-                            if (shouldDelete == true) {
-                              await QuizService().deleteQuiz(quiz['id']!);
+                              if (shouldDelete == true) {
+                                await QuizService().deleteQuiz(quiz['id']!);
 
-                              setState(() {
-                                quizzes.removeWhere((q) => q['id'] == quiz['id']);
-                              });
-                            }
-                          },
+                                setState(() {
+                                  quizzes.removeWhere(
+                                    (q) => q['id'] == quiz['id'],
+                                  );
+                                });
+                              }
+                            },
                             child: Icon(
                               Icons.close,
                               color: Colors.red,

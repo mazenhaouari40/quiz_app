@@ -21,9 +21,16 @@ class _QuizPageState extends State<QuizPage> {
   ];
   List<Set<int>> correctAnswers = [
     {1},
+<<<<<<< Updated upstream
   ];
 
   List<int> tempsQuestion = [5000]; 
+=======
+  ]; // Index of correct options
+  List<int> tempsQuestion = [
+    5000,
+  ]; // Stocke le temps par question en millisecondes (par défaut 5s)
+>>>>>>> Stashed changes
   int selectedQuestion = 0;
 
   void addNewQuestion() {
@@ -86,7 +93,12 @@ class _QuizPageState extends State<QuizPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: "Create quiz app"),
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: CustomAppBar(
+        title: "Create new quiz",
+        backgroundColor: Colors.white,
+        elevation: 2,
+      ),
       body: Column(
         children: [
           Padding(
@@ -349,25 +361,35 @@ child: Stack(
                                   ),
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 12,
-                                  ),   
-
+                                  ),
 
                                   child: DropdownButton<int>(
-                                    value: tempsQuestion[selectedQuestion], 
+
+                                    value:
+                                        tempsQuestion[selectedQuestion], // Nouvelle variable "tempsQuestion"
+
                                     onChanged: (int? newValue) {
                                       if (newValue != null) {
                                         setState(() {
-                                          tempsQuestion[selectedQuestion] = newValue;
+                                          tempsQuestion[selectedQuestion] =
+                                              newValue;
                                         });
                                       }
                                     },
-                                    items: [5000, 10000, 15000, 20000].map((int value) { // Valeurs en ms
-                                      return DropdownMenuItem<int>(
-                                        value: value,
-                                        child: Text("${value ~/ 1000} sec"), // Convertir en secondes pour affichage
-                                      );
-                                    }).toList(),
-                                  ),                                  
+                                    items:
+                                        [5000, 10000, 15000, 20000].map((
+                                          int value,
+                                        ) {
+                                          // Valeurs en ms
+                                          return DropdownMenuItem<int>(
+                                            value: value,
+                                            child: Text(
+                                              "${value ~/ 1000} sec",
+                                            ), // Convertir en secondes pour affichage
+                                          );
+                                        }).toList(),
+                                  ),
+
                                 ),
                               ],
                             ),
@@ -455,7 +477,7 @@ child: Stack(
                                     ),
                                   ),
                                   child: Text(
-                                    "New Option",
+                                    "+ New Option",
                                     style: TextStyle(color: Colors.white),
                                   ),
                                 ),
