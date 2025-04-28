@@ -103,51 +103,104 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: "HomePage"),
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: CustomAppBar(
+        title: "HomePage",
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Row(
-              children: [
-                SizedBox(
-                  height: 40,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => QuizPage()),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                    ),
-                    child: Text("New Quiz", style: TextStyle(fontSize: 14)),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
                   ),
-                ),
-                Expanded(child: SizedBox.shrink()),
-                SizedBox(
-                  width: 200,
-                  height: 40,
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: "Search",
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                      contentPadding: EdgeInsets.all(10),
-                      prefixIcon: Icon(Icons.search, size: 20),
+                ],
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    height: 40,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => QuizPage()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black, // Black background
+                        foregroundColor: Colors.white, // White text
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(
+                            color: Colors.black,
+                          ), // Optional: black border
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      child: Text(
+                        "New Quiz",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  Spacer(),
+                  SizedBox(
+                    width: 200,
+                    height: 40,
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: "Search",
+                        hintStyle: TextStyle(fontSize: 14),
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        prefixIcon: Icon(Icons.search, size: 20),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.blue,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             SizedBox(height: 20),
             Expanded(
               child: GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  childAspectRatio: 1.5, // Adjusted for buttons
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 250, // Max width for each item
+                  childAspectRatio: 1.2, // Width/Height ratio
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 10,
                 ),
@@ -155,21 +208,34 @@ class _HomePageState extends State<HomePage> {
                 itemBuilder: (context, index) {
                   final quiz = quizzes[index];
                   return Card(
+                    elevation: 6, // Stronger shadow
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        12,
+                      ), // Rounded corners
+                    ),
+                    color: Colors.white, // White background
+                    shadowColor: Colors.black26, // Softer shadow color
                     child: Stack(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.all(
+                            16.0,
+                          ), // Increased padding for better breathing space
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
                                 quiz['name']!,
                                 style: TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
+                              SizedBox(
+                                height: 16,
+                              ), // Add spacing between title and buttons
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceEvenly,
@@ -183,19 +249,25 @@ class _HomePageState extends State<HomePage> {
                                       );
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color.fromARGB(
+                                      backgroundColor: Color.fromARGB(
                                         255,
                                         54,
                                         244,
                                         76,
                                       ),
+                                      foregroundColor: Colors.white,
+                                      elevation: 2,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
                                       padding: EdgeInsets.symmetric(
-                                        horizontal: 12,
+                                        horizontal: 16,
+                                        vertical: 12,
                                       ),
                                     ),
                                     child: Text(
                                       "Play",
-                                      style: TextStyle(color: Colors.white),
+                                      style: TextStyle(fontSize: 14),
                                     ),
                                   ),
                                   // Update Button
@@ -211,7 +283,22 @@ class _HomePageState extends State<HomePage> {
                                         ),
                                       );
                                     },
-                                    child: Text("Update"),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.black,
+                                      foregroundColor: Colors.white,
+                                      elevation: 2,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      "Update",
+                                      style: TextStyle(fontSize: 14),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -236,14 +323,13 @@ class _HomePageState extends State<HomePage> {
                                         onPressed:
                                             () => Navigator.of(
                                               context,
-                                            ).pop(false), // Cancel
+                                            ).pop(false),
                                         child: Text('Cancel'),
                                       ),
                                       TextButton(
                                         onPressed:
-                                            () => Navigator.of(
-                                              context,
-                                            ).pop(true), // Confirm
+                                            () =>
+                                                Navigator.of(context).pop(true),
                                         child: Text(
                                           'Delete',
                                           style: TextStyle(color: Colors.red),

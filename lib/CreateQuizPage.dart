@@ -21,16 +21,9 @@ class _QuizPageState extends State<QuizPage> {
   ];
   List<Set<int>> correctAnswers = [
     {1},
-<<<<<<< Updated upstream
   ];
 
-  List<int> tempsQuestion = [5000]; 
-=======
-  ]; // Index of correct options
-  List<int> tempsQuestion = [
-    5000,
-  ]; // Stocke le temps par question en millisecondes (par défaut 5s)
->>>>>>> Stashed changes
+  List<int> tempsQuestion = [5000];
   int selectedQuestion = 0;
 
   void addNewQuestion() {
@@ -45,12 +38,11 @@ class _QuizPageState extends State<QuizPage> {
   void submitQuiz() {
     try {
       final user = Auth().currentUser?.uid;
-      String quizName =
-          _controller.text; 
+      String quizName = _controller.text;
 
       Map<String, dynamic> quizData = {
-        'quizName': quizName, 
-        'user': user, 
+        'quizName': quizName,
+        'user': user,
         'questions': [],
       };
 
@@ -234,54 +226,63 @@ class _QuizPageState extends State<QuizPage> {
                                 border: Border.all(color: Colors.black),
                               ),
 
-child: Stack(
-  children: [
-    Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      width: double.infinity,
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            selectedQuestion = index;
-          });
-        },
-        child: Text(
-          questions[index],
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis, 
-          style: TextStyle(
-            color: selectedQuestion == index ? Colors.white : Colors.black,
-            fontSize: 16,
-          ),
-        ),
-      ),
-    ),
-    Positioned(
-      top: 4,
-      right: 4,
-      child: GestureDetector(
-        onTap: () {
-          if (questions.length !=1){
-          setState(() {
-            questions.removeAt(index);
-            options.removeAt(index);
-            correctAnswers.removeAt(index);
-            tempsQuestion.removeAt(index);
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    width: double.infinity,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          selectedQuestion = index;
+                                        });
+                                      },
+                                      child: Text(
+                                        questions[index],
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color:
+                                              selectedQuestion == index
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        if (questions.length != 1) {
+                                          setState(() {
+                                            questions.removeAt(index);
+                                            options.removeAt(index);
+                                            correctAnswers.removeAt(index);
+                                            tempsQuestion.removeAt(index);
 
-            if (selectedQuestion >= questions.length) {
-              selectedQuestion = questions.length - 1;
-            }
-          });}
-        },
-        child: Icon(
-          Icons.close,
-          size: 18, // small icon
-          color: Colors.red,
-        ),
-      ),
-    ),
-  ],
-),
+                                            if (selectedQuestion >=
+                                                questions.length) {
+                                              selectedQuestion =
+                                                  questions.length - 1;
+                                            }
+                                          });
+                                        }
+                                      },
+                                      child: Icon(
+                                        Icons.close,
+                                        size: 18, // small icon
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             );
                           },
                         ),
@@ -317,37 +318,37 @@ child: Stack(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 12,
                                     ),
-                                        child: TextField(
-                                          textDirection:
-                                              TextDirection
-                                                  .ltr, // Explicitly set LTR
+                                    child: TextField(
+                                      textDirection:
+                                          TextDirection
+                                              .ltr, // Explicitly set LTR
 
-                                          controller: TextEditingController(
-                                              text: questions[selectedQuestion],
-                                            )
-                                            ..selection = TextSelection.collapsed(
-                                              offset:
-                                                  questions[selectedQuestion]
-                                                      .length,
-                                            ),
-                                          onChanged: (value) {
-                                            setState(() {
-                                              questions[selectedQuestion] = value;
-                                            });
-                                          },
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          decoration: InputDecoration(
-                                            border: InputBorder.none,
-                                            hintText: "Enter question",
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
-                                                  vertical: 12,
-                                                ),
-                                          ),
+                                      controller: TextEditingController(
+                                          text: questions[selectedQuestion],
+                                        )
+                                        ..selection = TextSelection.collapsed(
+                                          offset:
+                                              questions[selectedQuestion]
+                                                  .length,
                                         ),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          questions[selectedQuestion] = value;
+                                        });
+                                      },
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      decoration: InputDecoration(
+                                        border: InputBorder.none,
+                                        hintText: "Enter question",
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              vertical: 12,
+                                            ),
+                                      ),
+                                    ),
                                   ),
                                 ),
 
@@ -364,7 +365,6 @@ child: Stack(
                                   ),
 
                                   child: DropdownButton<int>(
-
                                     value:
                                         tempsQuestion[selectedQuestion], // Nouvelle variable "tempsQuestion"
 
@@ -389,7 +389,6 @@ child: Stack(
                                           );
                                         }).toList(),
                                   ),
-
                                 ),
                               ],
                             ),
