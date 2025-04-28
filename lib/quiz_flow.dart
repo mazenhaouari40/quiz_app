@@ -50,7 +50,7 @@ class _WaitingPageState extends State<WaitingPage>
   GameStatus _gameStatus = GameStatus.waiting;
   bool _isHost = false;
   StreamSubscription? _quizSubscription;
- Map<String, dynamic>? _quiz;
+  Map<String, dynamic>? _quiz;
   List<Map<String, dynamic>> _participantData = [];
   late Map<String, dynamic> currentQuestion;
   int? _numberquestion;
@@ -89,13 +89,13 @@ class _WaitingPageState extends State<WaitingPage>
     }
   }
 
-Future<void> _loadQuiz(String quizId) async {
-  try {
-    _quiz = await _quizService.fetchQuizById(quizId);
-  } catch (e) {
-    print("Error loading quiz: $e");
+  Future<void> _loadQuiz(String quizId) async {
+    try {
+      _quiz = await _quizService.fetchQuizById(quizId);
+    } catch (e) {
+      print("Error loading quiz: $e");
+    }
   }
-}
 
   Future<void> _loadQuestion() async {
     /*currentQuestion = await _quizService.fetchQuestionByIdFromActiveQuizzes(
@@ -105,30 +105,28 @@ Future<void> _loadQuiz(String quizId) async {
     _numberquestion = await _quizService.fetchNumberQuestions(
       widget.activequizId,
     );*/
-    currentQuestion = _quiz?['questions'][_currentQuizNumber];  
+    currentQuestion = _quiz?['questions'][_currentQuizNumber];
     _numberquestion = _quiz?['questions'].length;
-
   }
 
-Future<void> _initializeData() async {
-  await _loadQuiz(widget.quizid);
-  //_loadQuestion(); // Safe to call after quiz is loaded
-}
+  Future<void> _initializeData() async {
+    await _loadQuiz(widget.quizid);
+    //_loadQuestion(); // Safe to call after quiz is loaded
+  }
 
   @override
   void initState() {
     super.initState();
-      _initializeData();  
-      _controller = AnimationController(
-        vsync: this,
-        duration: Duration(seconds: 2),
-      )..repeat(reverse: true);
-      _fadeAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(_controller);
+    _initializeData();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 2),
+    )..repeat(reverse: true);
+    _fadeAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(_controller);
     _initializeData().then((_) {
-      _setupFirebaseListener(); 
-  });
+      _setupFirebaseListener();
+    });
   }
-
 
   Future<void> _removeUser(String participantId) async {
     try {
@@ -172,7 +170,7 @@ Future<void> _initializeData() async {
         .doc(widget.activequizId);
 
     _quizSubscription = activeQuizRef.snapshots().listen((docSnapshot) {
-      if (!mounted) return; 
+      if (!mounted) return;
 
       if (docSnapshot.exists) {
         final data = docSnapshot.data()!;
@@ -198,12 +196,11 @@ Future<void> _initializeData() async {
             if (mounted) {
               setState(() {
                 _fetchParticipants();
-              }); 
+              });
             }
           }
         });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -221,17 +218,19 @@ Future<void> _initializeData() async {
   }
 
   Widget _waiting_room() {
-    List<Map<String, dynamic>> participants = createParticipants(_participantData,);
+    List<Map<String, dynamic>> participants = createParticipants(
+      _participantData,
+    );
 
     return Scaffold(
-      backgroundColor: Color(0xFF1A1A2E), 
+      backgroundColor: Color(0xFF1A1A2E),
       appBar: AppBar(
-        backgroundColor: Color(0xFF0E0E0E), 
-        automaticallyImplyLeading: false, 
-        title: null, 
+        backgroundColor: Color(0xFF0E0E0E),
+        automaticallyImplyLeading: false,
+        title: null,
         flexibleSpace: Center(
           child: Text(
-          'Quiz Code: ${widget.invitation_code.substring(0, 3)} ${widget.invitation_code.substring(3)}',
+            'Quiz Code: ${widget.invitation_code.substring(0, 3)} ${widget.invitation_code.substring(3)}',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -378,24 +377,20 @@ Future<void> _initializeData() async {
       ),
     );
   }
-//test
-
+  //test
 
   //question
   Widget _question_screen() {
-
     final Map<String, dynamic> questionData = {
       "mappage": _currentQuizNumber, // Use default if null
-      "correctAnswers": List<int>.from(currentQuestion['correctAnswers'] ),
+      "correctAnswers": List<int>.from(currentQuestion['correctAnswers']),
       "options": List<String>.from(currentQuestion['options']),
-      "question":
-          currentQuestion['question'] ,
-         // currentQuestion['text'] ??
-          //'No question available',
-      "tempsquestion":
-          currentQuestion['tempsquestion'] 
-       //   currentQuestion['duration'] ??
-        //  10000,
+      "question": currentQuestion['question'],
+      // currentQuestion['text'] ??
+      //'No question available',
+      "tempsquestion": currentQuestion['tempsquestion'],
+      //   currentQuestion['duration'] ??
+      //  10000,
     };
 
     List<int> selectedAnswers = [];
@@ -424,11 +419,11 @@ Future<void> _initializeData() async {
                   correctAnswers,
                 );
               }
-              if(_isHost){
-              QuizService().changeGameStatus(
-                "leaderboard",
-                widget.activequizId,
-              );
+              if (_isHost) {
+                QuizService().changeGameStatus(
+                  "leaderboard",
+                  widget.activequizId,
+                );
               }
             }
           });
@@ -455,7 +450,7 @@ Future<void> _initializeData() async {
           body: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 _buildQuestionCard(questionText, mappage),
                 const SizedBox(height: 20),
@@ -486,7 +481,7 @@ Future<void> _initializeData() async {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               "Question ${mappage + 1}",
@@ -570,7 +565,6 @@ Future<void> _initializeData() async {
           );
         } else {
           QuizService().changeGameStatus("finished", widget.activequizId);
-
         }
       },
     );
@@ -583,10 +577,10 @@ Future<void> _initializeData() async {
           context,
           MaterialPageRoute(builder: (context) => _question_screen()),
         );*/
-        
+
         if (_isHost) {
-        QuizService().changeGameStatus("started", widget.activequizId);
-      }
+          QuizService().changeGameStatus("started", widget.activequizId);
+        }
       },
     );
   }

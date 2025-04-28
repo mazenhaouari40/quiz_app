@@ -1,47 +1,109 @@
 import 'package:flutter/material.dart';
+import 'package:quiz_app/widgets/AnimatedPodiumTile.dart';
 
 Widget LeaderboardScreen(
   List<Map<String, dynamic>> participantsData,
   bool _isHost,
   String _gameStatus,
-  String  _currentUserId,{
+  String _currentUserId, {
   VoidCallback? onNextQuestion,
 }) {
-
+  final maxScore =
+      participantsData.isNotEmpty
+          ? participantsData
+              .map((p) => p['score'] as int)
+              .reduce((a, b) => a > b ? a : b)
+          : 1;
   return Scaffold(
-
-    appBar: _isHost? AppBar(
-      backgroundColor: const Color(0xFF0E0E52),
-      centerTitle: true,
-      title: const Text(
-        "Leaderboard",
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-      ),
-    ):null,
+    appBar:
+        _isHost
+            ? AppBar(
+              backgroundColor: const Color(0xFF0E0E52),
+              centerTitle: true,
+              title: const Text(
+                "Leaderboard",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            )
+            : null,
 
     backgroundColor: const Color(0xFF1A1A40),
     body: Column(
       children: [
         // Show 'FINISHED' banner if game is finished
         if (_gameStatus == "finished")
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            color: Colors.redAccent.withOpacity(0.2),
-            child: const Text(
-              "FINISHED",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.redAccent,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2.0,
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              color: Colors.greenAccent,
+              child: Column(
+                children: [
+                  const Text(
+                    "FINAL RESULTS",
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2.0,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      AnimatedTile(
+                        delay: const Duration(milliseconds: 200),
+                        name:
+                            participantsData.length > 1
+                                ? participantsData[1]['displayName']
+                                : "Waiting...",
+                        score:
+                            participantsData.length > 1
+                                ? participantsData[1]['score']
+                                : 0,
+                        height: 150,
+                      ),
+                      const SizedBox(width: 16),
+                      AnimatedTile(
+                        delay: const Duration(milliseconds: 400),
+                        name:
+                            participantsData.isNotEmpty
+                                ? participantsData[0]['displayName']
+                                : "Waiting...",
+                        score:
+                            participantsData.isNotEmpty
+                                ? participantsData[0]['score']
+                                : 0,
+                        height: 180,
+                      ),
+                      const SizedBox(width: 16),
+                      AnimatedTile(
+                        delay: const Duration(milliseconds: 600),
+                        name:
+                            participantsData.length > 2
+                                ? participantsData[2]['displayName']
+                                : "Waiting...",
+                        score:
+                            participantsData.length > 2
+                                ? participantsData[2]['score']
+                                : 0,
+                        height: 130,
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
 
         // Spread conditional widgets
         ...[
+          // Score Board
           if (_isHost)
             Expanded(
               child: Padding(
@@ -49,7 +111,11 @@ Widget LeaderboardScreen(
                 child: ListView.builder(
                   itemCount: participantsData.length,
                   itemBuilder: (context, index) {
-                    final participant = participantsData[index];
+                    var participant = participantsData[index];
+                    double progress =
+                        (participant['score'] as int) /
+                        (maxScore == 0 ? 1 : maxScore);
+
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(16),
@@ -58,29 +124,59 @@ Widget LeaderboardScreen(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              Text(
-                                "#${index + 1}",
-                                style: const TextStyle(
-                                  color: Colors.amber,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                participant['displayName'],
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
+                          Text(
+                            "#${index + 1}",
+                            style: const TextStyle(
+                              color: Colors.amber,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
+                          const SizedBox(width: 12),
+
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Text(
+                                  participant['displayName'],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: TweenAnimationBuilder<double>(
+                                      tween: Tween<double>(
+                                        begin: 0,
+                                        end: progress,
+                                      ),
+                                      duration: const Duration(seconds: 1),
+                                      builder:
+                                          (
+                                            context,
+                                            value,
+                                            _,
+                                          ) => LinearProgressIndicator(
+                                            value: value,
+                                            backgroundColor: Colors.white24,
+                                            valueColor:
+                                                const AlwaysStoppedAnimation<
+                                                  Color
+                                                >(Colors.greenAccent),
+                                            minHeight: 8,
+                                          ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
                           Text(
                             participant['score'].toString(),
                             style: const TextStyle(
@@ -97,68 +193,63 @@ Widget LeaderboardScreen(
               ),
             )
           else
-          //yazid don t forget to design it well
+            // Indiv Score
             Expanded(
-            child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: participantsData
-                  .where((p) => p['userid'] == _currentUserId)
-                  .map((participant) => Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF212A6B),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        "Your Score",
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Container(
+                        width: 120,
+                        height: 120,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF212A6B),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            )
-                          ],
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.greenAccent,
+                            width: 5,
+                          ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Your Score",
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  participant['displayName'],
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                Text(
-                                  participant['score'].toString(),
-                                  style: const TextStyle(
-                                    color: Colors.greenAccent,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                        alignment: Alignment.center,
+                        child: Text(
+                          participantsData
+                              .firstWhere(
+                                (p) => p['userid'] == _currentUserId,
+                              )['score']
+                              .toString(),
+                          style: const TextStyle(
+                            color: Colors.greenAccent,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ))
-                  .toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-        )
-
-
         ],
 
         // Show 'Next Question' button for host only if game is not finished

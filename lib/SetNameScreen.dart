@@ -27,42 +27,82 @@ class _SetNameScreenState extends State<SetNameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Enter Your Name')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Your Name',
-                  border: OutlineInputBorder(),
-                  hintText: 'Enter your display name',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your name';
-                  }
-                  if (value.length > 20) {
-                    return 'Name must be less than 20 characters';
-                  }
-                  return null;
-                },
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: AppBar(
+        title: const Text('Enter Your Name'),
+        backgroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 600),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitName,
-                child:
-                    _isSubmitting
-                        ? const CircularProgressIndicator()
-                        : const Text('Continue to Quiz'),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Your Name',
+                        border: OutlineInputBorder(),
+                        hintText: 'Enter your display name',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your name';
+                        }
+                        if (value.length > 20) {
+                          return 'Name must be less than 20 characters';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    Align(
+                      alignment: Alignment.center,
+                      child: SizedBox(
+                        width: 200, // Button is smaller than the input
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _isSubmitting ? null : _submitName,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                          ),
+                          child:
+                              _isSubmitting
+                                  ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                  : const Text(
+                                    'Continue to Quiz',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -90,12 +130,13 @@ class _SetNameScreenState extends State<SetNameScreen> {
 
         await participantRef.update({'userid': participantRef.id});
 
-    final querySnapshot = await _firestore
-        .collection('actived_Quizzes')
-        .where('id', isEqualTo: widget.activatequizId)
-        .limit(1)
-        .get();
-    final quizid = querySnapshot.docs.first['quizzId'];
+        final querySnapshot =
+            await _firestore
+                .collection('actived_Quizzes')
+                .where('id', isEqualTo: widget.activatequizId)
+                .limit(1)
+                .get();
+        final quizid = querySnapshot.docs.first['quizzId'];
 
         // Navigate to WaitingPage with the entered name
         Navigator.pushReplacement(
@@ -106,7 +147,7 @@ class _SetNameScreenState extends State<SetNameScreen> {
                   activequizId: widget.activatequizId,
                   userId: participantRef.id,
                   invitation_code: widget.quizCode,
-                  quizid: quizid ,
+                  quizid: quizid,
                 ),
           ),
         );

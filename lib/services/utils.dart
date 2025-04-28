@@ -44,6 +44,8 @@ int calculateScore(
   double accuracyScore = (correctCount / totalQuestions) * timeInSeconds * 100;
   if (kDebugMode) {
     print(accuracyScore);
+    print(totalQuestions);
+    print(correctAnswers);
   }
 
   return accuracyScore.round();
