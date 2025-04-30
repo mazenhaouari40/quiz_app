@@ -26,7 +26,6 @@ class JoinQuizWidget extends StatelessWidget {
       final activatequizId = quizQuery.docs.first.id;
       final activeId = quizQuery.docs.first.data()['id'];
 
-      // Navigate to SetNameScreen
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -34,7 +33,6 @@ class JoinQuizWidget extends StatelessWidget {
               (context) => SetNameScreen(
                 quizCode: code,
                 activatequizId: activatequizId,
-                // activeId: activeId,
               ),
         ),
       );

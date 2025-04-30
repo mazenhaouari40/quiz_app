@@ -34,7 +34,7 @@ Widget LeaderboardScreen(
     body: Column(
       children: [
         // Show 'FINISHED' banner if game is finished
-        if (_gameStatus == "finished")
+        if (_gameStatus == "finished" && _isHost)
           Expanded(
             child: Container(
               width: double.infinity,

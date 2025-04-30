@@ -128,7 +128,7 @@ class _WaitingPageState extends State<WaitingPage>
     });
   }
 
-  Future<void> _removeUser(String participantId) async {
+ /* Future<void> _removeUser(String participantId) async {
     try {
       if (participantId.isEmpty) {
         throw Exception('Participant ID cannot be empty');
@@ -146,7 +146,7 @@ class _WaitingPageState extends State<WaitingPage>
       debugPrint('Error removing participant: $e');
       rethrow; // Re-throw to let calling code handle the error
     }
-  }
+  }*/
 
   Future<void> _fetchParticipants() async {
     try {
@@ -573,11 +573,6 @@ class _WaitingPageState extends State<WaitingPage>
   Widget _count_down() {
     return CountdownScreen(
       onCountdownComplete: () {
-        /*  Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => _question_screen()),
-        );*/
-
         if (_isHost) {
           QuizService().changeGameStatus("started", widget.activequizId);
         }
@@ -589,6 +584,6 @@ class _WaitingPageState extends State<WaitingPage>
   void dispose() {
     _controller.dispose();
     super.dispose();
-    _removeUser(widget.userId);
+   // _removeUser(widget.userId);
   }
 }
