@@ -2,16 +2,24 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:quiz_app/services/quiz.dart';
+
+Future<Queue<String>> loadCodes() async {
+  final quizService = QuizService();
+  Queue<String> _generatedCodes = await quizService.fetchInvitationCodes();
+  return _generatedCodes; // Now you can use it here
+}
 
 class UniqueCodeGenerator {
-  final Queue<String> _generatedCodes = Queue();
   final Random _random = Random(DateTime.now().millisecondsSinceEpoch);
   final int maxSize;
 
   UniqueCodeGenerator({this.maxSize = 1000});
 
-  String generateCode() {
+  Future<String> generateCode() async {
+    Queue<String> _generatedCodes = await loadCodes();
     String newCode;
+
     do {
       int firstPart = _random.nextInt(900) + 100;
       int secondPart = _random.nextInt(900) + 100;

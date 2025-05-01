@@ -52,11 +52,11 @@ class _LoginPageState extends State<LoginPage> {
     return Text(
       isLogin ? 'Log in to your account' : 'Create a free account',
       style: TextStyle(
-        fontSize: 22, // Bigger text size
-        fontWeight: FontWeight.bold, // Bold text
-        color: Colors.black, // Optional: Adjust color if needed
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
       ),
-      textAlign: TextAlign.center, // Centers the text
+      textAlign: TextAlign.center,
     );
   }
 
@@ -100,10 +100,7 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         Text(
           isLogin ? "Don't have an account? " : "Already have an account? ",
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.black,
-          ), // Adjust text style
+          style: TextStyle(fontSize: 16, color: Colors.black),
         ),
         TextButton(
           onPressed: () {
@@ -190,7 +187,16 @@ class _LoginPageState extends State<LoginPage> {
                     children: <Widget>[
                       _title(),
                       SizedBox(height: 16),
-                      GoogleSignInButton(onPressed: () {}),
+                      GoogleSignInButton(
+                        onPressed: () async {
+                          try {
+                            await Auth().signInWithGoogle();
+                            print("Signed in successfully");
+                          } catch (e) {
+                            print("Google sign-in failed: $e");
+                          }
+                        },
+                      ),
                       SizedBox(height: 16),
                       Text(
                         ' - or use - ',

@@ -78,7 +78,7 @@ class _HomePageState extends State<HomePage> {
       // Generate necessary data with null checks
       final quizId = quiz['id'];
       final userId = quiz['createdBy'];
-      final invitationCode = code_generator.generateCode();
+      final invitationCode = await code_generator.generateCode();
 
       if (quizId == 'default_quiz_id' || userId == 'default_user_id') {
         throw Exception('Quiz ID or User ID is missing');

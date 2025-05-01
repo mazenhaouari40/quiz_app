@@ -1,9 +1,10 @@
+import 'dart:collection';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:quiz_app/services/utils.dart';
-
 
 class QuizService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -110,7 +111,7 @@ class QuizService {
       }
     } catch (e) {
       print('Error fetching quiz: $e');
-      throw e; 
+      throw e;
     }
   }
 
@@ -161,7 +162,7 @@ class QuizService {
       "status": gameStatus,
     });
   }
-  
+
   Future<void> setscoreparticipant(
     List<int> selectedAnswers,
     String participantId,
@@ -182,22 +183,41 @@ class QuizService {
         print(timeuser);
       }
 
-      debugPrint('$correctAnswers'); 
-      int points =0;
+      debugPrint('$correctAnswers');
+      int points = 0;
       // 2. calculate points
       points = calculateScore(
         selectedAnswers,
         correctAnswers,
         timeuser as double,
       );
-      
+
       // 4. Update participant data
       await participantRef.update({'score': FieldValue.increment(points)});
-
     } catch (e) {
       throw Exception('Failed to update participant score');
     }
   }
 
-  
+  Future<Queue<String>> fetchInvitationCodes() async {
+    final Queue<String> generatedCodes = Queue<String>();
+
+    try {
+      final querySnapshot =
+          await FirebaseFirestore.instance
+              .collection('activated_Quizzes')
+              .get();
+
+      for (var doc in querySnapshot.docs) {
+        final code = doc['invitation_code'];
+        if (code != null && code is String) {
+          generatedCodes.add(code);
+        }
+      }
+    } catch (e) {
+      print('Error fetching invitation codes: $e');
+    }
+
+    return generatedCodes;
+  }
 }

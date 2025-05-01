@@ -30,10 +30,8 @@ class JoinQuizWidget extends StatelessWidget {
         context,
         MaterialPageRoute(
           builder:
-              (context) => SetNameScreen(
-                quizCode: code,
-                activatequizId: activatequizId,
-              ),
+              (context) =>
+                  SetNameScreen(quizCode: code, activatequizId: activatequizId),
         ),
       );
     } catch (e) {
